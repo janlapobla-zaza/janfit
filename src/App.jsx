@@ -3,80 +3,27 @@ import { useState, useEffect, useCallback } from "react";
 const TODAY = new Date().toISOString().split("T")[0];
 const DATE_DISPLAY = new Date().toLocaleDateString("es", { weekday: "long", day: "numeric", month: "short" });
 
-const HABITS = [
+const ALL_HABITS_POOL = [
   { id: "agua", icon: "💧", label: "Agua (2L+)" },
   { id: "pro", icon: "🥩", label: "Proteína cubierta" },
-  { id: "sleep", icon: "😴", label: "Dormí bien" },
+  { id: "sleep", icon: "😴", label: "Dormir 7-8h" },
+  { id: "pasos", icon: "👟", label: "Pasos diarios" },
   { id: "ducha", icon: "🧊", label: "Ducha fría" },
-  { id: "movil", icon: "🔄", label: "Movilidad / stretching" },
+  { id: "movil", icon: "🔄", label: "Movilidad / Stretching" },
+  { id: "meditar", icon: "🧘", label: "Foco / Meditación" }
 ];
 
 const DAY_MAP = ["DOM","LUN","MAR","MIÉ","JUE","VIE","SÁB"];
 const TODAY_DOW = DAY_MAP[new Date().getDay()];
 
 const WORKOUTS = [
-  { tag: "LUN", name: "PUSH — Pecho · Hombro · Tríceps", ex: [
-    ["Slow push-ups", "3 × 5–6", "Bajada 4s, pausa abajo, sube controlado"],
-    ["Incline push-ups", "3 × 5–6", "Pies elevados, pecho superior, sin colapsar"],
-    ["Pike push-ups", "3 × 5", "Cadera alta, hombros al frente, tensión consciente"],
-    ["Tricep dips (silla)", "3 × 6", "Bajada lenta 3s, codos atrás sin abrirse"],
-    ["Diamond push-ups", "3 × 5", "Codos pegados, siente el tríceps en cada rep"],
-    ["Hollow hold (borde cama)", "3 × 20s", "Retroversión, esconder cola, respiración corta"],
-    ["Rehab tobillo", "2 min", "Tibialis raises + equilibrio monopodal"],
-  ]},
-  { tag: "MAR", name: "PULL — Espalda · Bíceps · Postura", ex: [
-    ["Australian Rows", "3 × 5–6", "Cuerpo rígido, escápulas al final, bajada lenta"],
-    ["Dead Hang", "3 × 20–30s", "Hombros activos, no pasivo, respira"],
-    ["Scapular Pulls", "3 × 6", "Solo escápulas, sin doblar codos"],
-    ["Remo con mochila", "3 × 5 c/l", "Codo 90° arriba, pausa arriba 1s"],
-    ["Face pulls (toalla)", "3 × 8", "Deltoide posterior, control escapular total"],
-    ["Curl martillo", "3 × 6", "Tensión lenta, sin balanceo, siente el bíceps"],
-    ["Core ligero", "2 × 20s", "Dead bug o bird dog, sin prisa"],
-  ]},
-  { tag: "MIÉ", name: "ACTIVO — Movilidad · Recuperación", ex: [
-    ["Movilidad cadera", "2 × 60s c/l", "90/90, círculos, sin forzar"],
-    ["Movilidad torácica", "2 × 8", "Cat-cow + rotaciones lentas"],
-    ["Core técnico", "3 × 20s", "Dead bug o bird dog, control respiratorio"],
-    ["Rehab tobillo", "5 min", "Propiocepción + movilidad completa"],
-    ["Stretching", "10 min", "Sin rebotes, respiración lenta, disfruta"],
-  ]},
-  { tag: "JUE", name: "PIERNA + REHAB — Estabilidad · Glúteo", ex: [
-    ["Sentadilla controlada", "3 × 6", "Bajada 3s, rodilla alineada, talón pegado"],
-    ["Step-ups", "3 × 5 c/l", "Control total, no impulso, glúteo activo"],
-    ["Glute bridge", "3 × 8", "Aprieta glúteo 2s arriba, sin acelerar"],
-    ["Calf raise", "3 × 8", "Lento, rango completo, tobillo estable"],
-    ["Tibialis raises", "3 × 10", "Contra pared, punta arriba controlada"],
-    ["Balance unilateral", "3 × 30s", "Progresivo, ojos cerrados si puedes"],
-    ["Hollow hold", "3 × 20s", "Core profundo, retroversión activa"],
-  ]},
-  { tag: "VIE", name: "UPPER ESTÉTICO — Pump · Hombros · Brazos", ex: [
-    ["Elevaciones laterales", "4 × 6–8", "Sin impulso, sube lento, baja más lento"],
-    ["Press militar (mochila)", "3 × 5–6", "Tensión consciente, hombros 3D"],
-    ["Slow push-ups explosivas", "3 × 5", "Bajada 3s, subida potente controlada"],
-    ["Curl concentrado", "3 × 6", "Codo fijo, supinación arriba, pausa 1s"],
-    ["Hollow hold progresivo", "3 × 25s", "Cada semana unos segundos más"],
-    ["Postura final", "5 min", "Pecho abierto, escápulas abajo, respira"],
-  ]},
-  { tag: "SÁB", name: "ACTIVO LIBRE", ex: [
-    ["Caminar, esquí, movilidad o deporte libre", "", "Sin estructura. Muévete y disfruta."],
-  ]},
-  { tag: "DOM", name: "RESET — Recuperación", ex: [
-    ["Stretching completo", "15 min", "Todo el cuerpo, sin prisa"],
-    ["Movilidad tobillo", "5 min", "Preparar semana"],
-    ["Respiración / mindfulness", "5 min", "Reset mental y físico"],
-  ]},
-];
-
-const PARK_WORKOUT = [
-  ["Australian Rows (barra baja)", "3 × 5–6", "Cuerpo rígido, escápulas al final"],
-  ["Dead Hang", "3 × 20–30s", "Hombros activos, respira, descomprime"],
-  ["Scapular Pulls", "3 × 6", "Solo escápulas, sin doblar codos"],
-  ["Monkey Bars suaves", "2 pasadas", "Control, sin balanceo, tranquilo"],
-  ["Push-ups lentas", "3 × 5", "Bajada 4s, pausa, sube controlado"],
-  ["Step-ups (banco)", "3 × 5 c/l", "Glúteo activo, sin impulso"],
-  ["Balance unilateral", "3 × 30s", "Tobillo fuerte, ojos cerrados si puedes"],
-  ["Tibialis Raises", "3 × 10", "Contra pared o bordillo"],
-  ["Hollow Hold progresivo", "3 × 20s", "Retroversión, respiración corta"],
+  { tag: "LUN", name: "PUSH — Pecho · Hombro · Tríceps", ex: [["Slow push-ups", "3 × 5–6", "Bajada 4s, pausa, sube controlado"], ["Incline push-ups", "3 × 5–6", "Pies elevados, pecho superior"], ["Pike push-ups", "3 × 5", "Cadera alta, hombros al frente"], ["Tricep dips", "3 × 6", "Bajada lenta 3s, codos atrás"]] },
+  { tag: "MAR", name: "PULL — Espalda · Bíceps · Postura", ex: [["Australian Rows", "3 × 5–6", "Cuerpo rígido, escápulas al final"], ["Dead Hang", "3 × 20–30s", "Hombros activos, no pasivo"], ["Scapular Pulls", "3 × 6", "Solo escápulas, sin doblar codos"]] },
+  { tag: "MIÉ", name: "ACTIVO — Movilidad · Recuperación", ex: [["Movilidad cadera", "2 × 60s", "90/90, sin forzar"], ["Movilidad torácica", "2 × 8", "Cat-cow + rotaciones"], ["Stretching", "10 min", "Sin rebotes, respiración lenta"]] },
+  { tag: "JUE", name: "PIERNA + REHAB — Estabilidad · Glúteo", ex: [["Sentadilla controlada", "3 × 6", "Bajada 3s, rodilla alineada"], ["Step-ups", "3 × 5 c/l", "Control total, glúteo activo"], ["Glute bridge", "3 × 8", "Aprieta glúteo 2s arriba"]] },
+  { tag: "VIE", name: "UPPER ESTÉTICO — Pump · Brazos", ex: [["Elevaciones laterales", "4 × 6–8", "Sube lento, baja más lento"], ["Press militar", "3 × 5–6", "Con mochila o tensión consciente"], ["Curl concentrado", "3 × 6", "Codo fijo, supinación arriba"]] },
+  { tag: "SÁB", name: "ACTIVO LIBRE", ex: [["Moverse libre", "", "Esquí, caminar o deporte libre"]] },
+  { tag: "DOM", name: "RESET — Recuperación", ex: [["Stretching completo", "15 min", "Todo el cuerpo, sin prisa"], ["Movilidad tobillo", "5 min", "Preparar semana"]] }
 ];
 
 const SK = "jfit-v2";
@@ -84,10 +31,7 @@ const SK = "jfit-v2";
 function loadData() {
   try {
     const r = localStorage.getItem(SK);
-    if (r) {
-      const parsed = JSON.parse(r);
-      return parsed.value ? JSON.parse(parsed.value) : parsed;
-    }
+    if (r) return JSON.parse(r).value ? JSON.parse(JSON.parse(r).value) : JSON.parse(r);
   } catch {}
   return { days: {}, wIdx: 0, profile: null };
 }
@@ -120,25 +64,17 @@ function weekDots(data) {
   });
 }
 
-const C = {
-  bg: "#07070f", surface: "#0b0b18", card: "#0f0f1f",
-  bdr: "rgba(0,207,255,0.1)", accent: "#00cfff", green: "#00e87c",
-  amber: "#ffc107", muted: "rgba(255,255,255,0.38)", dim: "rgba(255,255,255,0.06)",
-};
+const C = { bg: "#07070f", surface: "#0b0b18", card: "#0f0f1f", bdr: "rgba(0,207,255,0.1)", accent: "#00cfff", green: "#00e87c", amber: "#ffc107", muted: "rgba(255,255,255,0.38)", dim: "rgba(255,255,255,0.06)" };
 
 function Onboarding({ onComplete }) {
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState({
-    nombre: "", edad: "", sexo: "",
-    historial: "", lesiones: "",
-    objetivo: "", dias: "",
-    ritmo: "", fallos: [],
-  });
+  const [form, setForm] = useState({ nombre: "", edad: "", sexo: "", historial: "", lesiones: "", objetivo: "", dias: "3", ritmo: "activo", fallos: [], habitosElegidos: ["agua", "pro", "sleep"] });
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
-  const toggleFallo = (id) => setForm(f => ({
+  
+  const toggleHabit = (id) => setForm(f => ({
     ...f,
-    fallos: f.fallos.includes(id) ? f.fallos.filter(x => x !== id) : [...f.fallos, id]
+    habitosElegidos: f.habitosElegidos.includes(id) ? f.habitosElegidos.filter(x => x !== id) : [...f.habitosElegidos, id]
   }));
 
   const next = () => setStep(s => s + 1);
@@ -146,7 +82,7 @@ function Onboarding({ onComplete }) {
     if (step === 1) return form.nombre && form.edad && form.sexo;
     if (step === 2) return form.historial;
     if (step === 3) return form.objetivo;
-    if (step === 4) return form.dias && form.ritmo;
+    if (step === 4) return form.dias && form.ritmo && form.habitosElegidos.length > 0;
     return true;
   };
 
@@ -154,7 +90,7 @@ function Onboarding({ onComplete }) {
 
   return (
     <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", background: "#07070f", color: "#fff", fontFamily: "'Outfit', sans-serif", display: "flex", flexDirection: "column" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap'); *{box-sizing:border-box;margin:0;padding:0;} input::placeholder{color:rgba(255,255,255,0.25);} @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap'); *{box-sizing:border-box;margin:0;padding:0;} input::placeholder{color:rgba(255,255,255,0.25);} button:disabled{opacity:0.25; cursor:not-allowed;} @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}`}</style>
 
       {step > 0 && step < 5 && (
         <div style={{ height: 2, background: "rgba(255,255,255,0.05)", position: "relative" }}>
@@ -219,29 +155,30 @@ function Onboarding({ onComplete }) {
 
         {step === 4 && (
           <div>
-            <div style={{ fontFamily: "'DM Mono'", fontSize: 10, color: "#00cfff", letterSpacing: "4px", marginBottom: 8 }}>04 / TU RITMO</div>
-            <div style={{ fontFamily: "'Bebas Neue'", fontSize: 34, lineHeight: 1.1, marginBottom: 20 }}>CÓMO ES TU VIDA</div>
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 10 }}>Días que puedes entrenar:</div>
-            <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
+            <div style={{ fontFamily: "'DM Mono'", fontSize: 10, color: "#00cfff", letterSpacing: "4px", marginBottom: 8 }}>04 / TU PLANIFICACIÓN</div>
+            <div style={{ fontFamily: "'Bebas Neue'", fontSize: 34, lineHeight: 1.1, marginBottom: 20 }}>RITMO Y HÁBITOS</div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 8 }}>Días semanales de entreno:</div>
+            <div style={{ display: "flex", gap: 4, marginBottom: 15 }}>
               {["1","2","3","4","5","6","7"].map(d => (
-                <button key={d} onClick={() => set("dias", d)} style={{ flex: 1, padding: "10px 0", borderRadius: 10, background: form.dias === d ? "rgba(0,207,255,0.12)" : "rgba(255,255,255,0.04)", border: `1px solid ${form.dias === d ? "#00cfff" : "rgba(255,255,255,0.1)"}`, color: "#fff", fontSize: 14, fontWeight: 600 }}>{d}</button>
+                <button key={d} onClick={() => set("dias", d)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, background: form.dias === d ? "rgba(0,207,255,0.12)" : "rgba(255,255,255,0.04)", border: `1px solid ${form.dias === d ? "#00cfff" : "rgba(255,255,255,0.1)"}`, color: "#fff", fontSize: 13, fontWeight: 600 }}>{d}</button>
               ))}
             </div>
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 10 }}>Tu ritmo de vida:</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 8 }}>Ritmo de vida actual:</div>
+            <div style={{ display: "flex", gap: 6, marginBottom: 15 }}>
               {[
-                { id: "tranquilo", icon: "🌿", label: "Tranquilo", sub: "Días ordenados, poco estrés" },
-                { id: "activo", icon: "⚡", label: "Activo", sub: "Siempre en movimiento, productivo" },
-                { id: "caotico", icon: "🌪️", label: "Caótico", sub: "Horarios irregulares, mucha variación" },
+                { id: "tranquilo", label: "🌿 Tranquilo" },
+                { id: "activo", label: "⚡ Activo" },
+                { id: "caotico", label: "🌪️ Caótico" }
               ].map(r => (
-                <button key={r.id} onClick={() => set("ritmo", r.id)} style={{ padding: "12px 16px", borderRadius: 12, background: form.ritmo === r.id ? "rgba(0,207,255,0.08)" : "rgba(255,255,255,0.03)", border: `1px solid ${form.ritmo === r.id ? "#00cfff" : "rgba(255,255,255,0.08)"}`, color: "#fff", textAlign: "left", display: "flex", alignItems: "center", gap: 14 }}>
-                  <span style={{ fontSize: 22 }}>{r.icon}</span>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: form.ritmo === r.id ? "#00cfff" : "#fff" }}>{r.label}</div>
-                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{r.sub}</div>
-                  </div>
-                </button>
+                <button key={r.id} onClick={() => set("ritmo", r.id)} style={{ flex: 1, padding: "10px 0", borderRadius: 8, background: form.ritmo === r.id ? "rgba(0,207,255,0.12)" : "rgba(255,255,255,0.04)", border: `1px solid ${form.ritmo === r.id ? "#00cfff" : "rgba(255,255,255,0.1)"}`, color: "#fff", fontSize: 13 }}>{r.label}</button>
               ))}
+            </div>
+            <div style={{ fontSize: 12, color: C.accent, fontWeight: 600, marginBottom: 8 }}>SELECCIONA TUS HÁBITOS CLAVE:</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, maxHeight: 110, overflowY: "auto", padding: 2 }}>
+              {ALL_HABITS_POOL.map(h => {
+                const active = form.habitosElegidos.includes(h.id);
+                return <button key={h.id} onClick={() => toggleHabit(h.id)} style={{ padding: 8, fontSize: 12, background: active ? "rgba(0,232,124,0.08)" : "rgba(255,255,255,0.03)", border: `1px solid ${active ? C.green : "rgba(255,255,255,0.1)"}`, color: "#fff", textAlign: "left", display: "flex", gap: 6 }}><span>{h.icon}</span>{h.label}</button>;
+              })}
             </div>
           </div>
         )}
@@ -259,7 +196,7 @@ function Onboarding({ onComplete }) {
 
       {step > 0 && step < 5 && (
         <div style={{ padding: "16px 20px 28px" }}>
-          <button onClick={next} disabled={!canNext()} style={{ width: "100%", padding: "15px", borderRadius: 12, background: canNext() ? "rgba(0,207,255,0.12)" : "rgba(255,255,255,0.03)", border: `1px solid ${canNext() ? "#00cfff" : "rgba(255,255,255,0.08)"}`, color: canNext() ? "#00cfff" : "rgba(255,255,255,0.2)", fontFamily: "'Bebas Neue'", fontSize: 20, letterSpacing: "2px", cursor: canNext() ? "pointer" : "not-allowed" }}>
+          <button onClick={next} disabled={!canNext()} style={{ width: "100%", padding: "15px", borderRadius: 12, background: canNext() ? "rgba(0,207,255,0.12)" : "rgba(255,255,255,0.03)", border: `1px solid ${canNext() ? "#00cfff" : "rgba(255,255,255,0.08)"}`, color: canNext() ? "#00cfff" : "rgba(255,255,255,0.2)", fontFamily: "'Bebas Neue'", fontSize: 20, letterSpacing: "2px" }}>
             {step === 4 ? "VER MI PERFIL" : "CONTINUAR →"}
           </button>
         </div>
@@ -343,7 +280,10 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           system: "COACH_REMARK",
-          messages: updatedMessages.map(m => ({ role: m.role, content: m.content })),
+          messages: updatedMessages.map(m => ({
+            role: m.role === "assistant" ? "assistant" : "user",
+            content: String(m.content).trim()
+          })),
           profile: p,
           today: { done: todayData.done, name: workout?.name, notes: todayData.notes, meals: todayData.meals, habits: todayData.habits }
         })
@@ -365,7 +305,9 @@ export default function App() {
   const workout = WORKOUTS.find(w => w.tag === TODAY_DOW) ?? WORKOUTS[0];
   const dots = weekDots(data);
   const totalSessions = Object.values(data.days ?? {}).filter(d => d.done).length;
-  const doneHabits = HABITS.filter(h => td.habits?.[h.id]).length;
+  
+  const userSelectedHabits = ALL_HABITS_POOL.filter(h => data.profile.habitosElegidos?.includes(h.id));
+  const doneHabits = userSelectedHabits.filter(h => td.habits?.[h.id]).length;
 
   return (
     <>
@@ -414,12 +356,12 @@ export default function App() {
               <div style={{ background: C.card, borderRadius: 14, border: `1px solid ${C.bdr}`, overflow: "hidden" }}>
                 <div style={{ padding: "11px 16px", borderBottom: `1px solid ${C.dim}`, display: "flex", justifyContent: "space-between" }}>
                   <span style={{ fontFamily: "'Bebas Neue'", fontSize: 15, letterSpacing: "1.5px", color: C.accent }}>HÁBITOS HOY</span>
-                  <span style={{ fontFamily: "'DM Mono'", fontSize: 12, color: doneHabits === HABITS.length ? C.green : C.muted }}>{doneHabits}/{HABITS.length}</span>
+                  <span style={{ fontFamily: "'DM Mono'", fontSize: 12, color: doneHabits === userSelectedHabits.length ? C.green : C.muted }}>{doneHabits}/{userSelectedHabits.length}</span>
                 </div>
-                {HABITS.map((h, i) => {
+                {userSelectedHabits.map((h, i) => {
                   const done = !!td.habits?.[h.id];
                   return (
-                    <button key={h.id} onClick={() => mutate({ habits: { ...td.habits, [h.id]: !done } })} style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", background: "none", border: "none", borderBottom: i < HABITS.length - 1 ? `1px solid ${C.dim}` : "none", cursor: "pointer", color: done ? "#fff" : C.muted }}>
+                    <button key={h.id} onClick={() => mutate({ habits: { ...td.habits, [h.id]: !done } })} style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", background: "none", border: "none", borderBottom: i < userSelectedHabits.length - 1 ? `1px solid ${C.dim}` : "none", cursor: "pointer", color: done ? "#fff" : C.muted }}>
                       <span style={{ fontSize: 17 }}>{h.icon}</span>
                       <span style={{ flex: 1, textAlign: "left", fontSize: 14, fontWeight: done ? 500 : 400 }}>{h.label}</span>
                       <div style={{ width: 20, height: 20, borderRadius: 5, background: done ? C.green : "transparent", border: `1.5px solid ${done ? C.green : "rgba(255,255,255,0.2)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>{done && "✓"}</div>
@@ -518,7 +460,7 @@ export default function App() {
           {tab === "coach" && (
             <div className="fade" style={{ paddingTop: 14, display: "flex", flexDirection: "column", height: "calc(100vh - 140px)" }}>
               <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 10, paddingBottom: 8 }}>
-                {coachMessages.length === 0 && <div style={{ background: C.card, borderRadius: 14, border: `1px solid ${C.bdr}`, padding: "18px 16px", color: C.muted, fontSize: 13 }}>Jarvis Coach activo. Tengo tu perfil completo. Pídeme ajustes tácticos o adaptaciones sin excusas.</div>}
+                {coachMessages.length === 0 && <div style={{ background: C.card, borderRadius: 14, border: `1px solid ${C.bdr}`, padding: "18px 16px", color: C.muted, fontSize: 13 }}>Jarvis Coach activo. Tengo tu perfil de anamnesis completo. Pídeme ajustes técnicos o tácticos sin excusas.</div>}
                 {coachMessages.map((m, i) => (
                   <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}><div style={{ maxWidth: "85%", padding: "12px 14px", borderRadius: m.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px", background: m.role === "user" ? "rgba(0,207,255,0.12)" : C.card, border: `1px solid ${m.role === "user" ? "rgba(0,207,255,0.3)" : C.bdr}`, fontSize: 14, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{m.content}</div></div>
                 ))}
