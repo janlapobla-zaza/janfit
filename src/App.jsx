@@ -127,39 +127,6 @@ const C = {
 };
 
 // ─── ONBOARDING / ANAMNESIS ───────────────────────────────────────────
-const STEPS = [
-  { id: "intro" },
-  { id: "quien" },
-  { id: "historial" },
-  { id: "objetivo" },
-  { id: "estilo" },
-  { id: "done" },
-];
-
-const OBJETIVOS = [
-  { id: "recuperacion", icon: "🩹", label: "Recuperación muscular" },
-  { id: "deporte", icon: "⛷️", label: "Volver al deporte" },
-  { id: "definicion", icon: "🔥", label: "Definición y estética" },
-  { id: "masa", icon: "💪", label: "Ganar masa muscular" },
-  { id: "bajar", icon: "⚡", label: "Perder peso" },
-  { id: "rendimiento", icon: "🏆", label: "Rendimiento general" },
-];
-
-const FALLOS = [
-  { id: "tiempo", label: "Falta de tiempo" },
-  { id: "motivacion", label: "Pérdida de motivación" },
-  { id: "lesion", label: "Lesiones" },
-  { id: "nosabia", label: "No sabía qué hacer" },
-  { id: "primera", label: "Es mi primera vez" },
-  { id: "rutina", label: "No encontré una rutina que me encajara" },
-];
-
-const RITMOS = [
-  { id: "tranquilo", icon: "🌿", label: "Tranquilo", sub: "Días ordenados, poco estrés" },
-  { id: "activo", icon: "⚡", label: "Activo", sub: "Siempre en movimiento, productivo" },
-  { id: "caotico", icon: "🌪️", label: "Caótico", sub: "Horarios irregulares, mucha variación" },
-];
-
 function Onboarding({ onComplete }) {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({
@@ -196,13 +163,13 @@ function Onboarding({ onComplete }) {
     />
   );
 
-  const progress = step / (STEPS.length - 1);
+  const progress = step / 5;
 
   return (
     <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", background: "#07070f", color: "#fff", fontFamily: "'Outfit', sans-serif", display: "flex", flexDirection: "column" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap'); *{box-sizing:border-box;margin:0;padding:0;} input::placeholder{color:rgba(255,255,255,0.25);} @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}`}</style>
 
-      {step > 0 && step < STEPS.length - 1 && (
+      {step > 0 && step < 5 && (
         <div style={{ height: 2, background: "rgba(255,255,255,0.05)", position: "relative" }}>
           <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${progress * 100}%`, background: "#00cfff", transition: "width 0.4s ease", borderRadius: 2 }} />
         </div>
@@ -261,7 +228,7 @@ function Onboarding({ onComplete }) {
             />
             <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 8, letterSpacing: "0.5px" }}>Lesiones u operaciones relevantes (opcional)</div>
             <textarea
-              placeholder="Ej: esguince tobillo izquierdo, operation rodilla en 2021..."
+              placeholder="Ej: esguince tobillo izquierdo, operación rodilla en 2021..."
               value={form.lesiones}
               onChange={e => set("lesiones", e.target.value)}
               rows={2}
@@ -276,7 +243,14 @@ function Onboarding({ onComplete }) {
             <div style={{ fontFamily: "'Bebas Neue'", fontSize: 34, lineHeight: 1.1, marginBottom: 6 }}>TU OBJETIVO</div>
             <div style={{ fontSize: 13, color: "rgba(255,255,255,0.38)", marginBottom: 24 }}>Aunque sea vago. El sistema se adapta.</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              {OBJETIVOS.map(o => (
+              {[
+                { id: "recuperacion", icon: "🩹", label: "Recuperación muscular" },
+                { id: "deporte", icon: "⛷️", label: "Volver al deporte" },
+                { id: "definicion", icon: "🔥", label: "Definición y estética" },
+                { id: "masa", icon: "💪", label: "Ganar masa muscular" },
+                { id: "bajar", icon: "⚡", label: "Perder peso" },
+                { id: "rendimiento", icon: "🏆", label: "Rendimiento general" },
+              ].map(o => (
                 <button key={o.id} onClick={() => set("objetivo", o.id)} style={{ padding: "14px 12px", borderRadius: 12, background: form.objetivo === o.id ? "rgba(0,232,124,0.1)" : "rgba(255,255,255,0.03)", border: `1px solid ${form.objetivo === o.id ? "#00e87c" : "rgba(255,255,255,0.08)"}`, color: form.objetivo === o.id ? "#00e87c" : "rgba(255,255,255,0.6)", cursor: "pointer", textAlign: "left", transition: "all 0.18s" }}>
                   <div style={{ fontSize: 22, marginBottom: 6 }}>{o.icon}</div>
                   <div style={{ fontSize: 13, fontWeight: 500, lineHeight: 1.3 }}>{o.label}</div>
@@ -302,8 +276,12 @@ function Onboarding({ onComplete }) {
             </div>
 
             <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 10, letterSpacing: "0.5px" }}>Tu ritmo de vida</div>
-            <div style={{ display: "flex", flexSpread: "column", gap: 8, marginBottom: 20, flexDirection: "column" }}>
-              {RITMOS.map(r => (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
+              {[
+                { id: "tranquilo", icon: "🌿", label: "Tranquilo", sub: "Días ordenados, poco estrés" },
+                { id: "activo", icon: "⚡", label: "Activo", sub: "Siempre en movement, productivo" },
+                { id: "caotico", icon: "🌪️", label: "Caótico", sub: "Horarios irregulares, mucha variación" },
+              ].map(r => (
                 <button key={r.id} onClick={() => set("ritmo", r.id)} style={{ padding: "14px 16px", borderRadius: 12, background: form.ritmo === r.id ? "rgba(0,207,255,0.08)" : "rgba(255,255,255,0.03)", border: `1px solid ${form.ritmo === r.id ? "#00cfff" : "rgba(255,255,255,0.08)"}`, color: "#fff", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 14, transition: "all 0.18s" }}>
                   <span style={{ fontSize: 24 }}>{r.icon}</span>
                   <div>
@@ -314,9 +292,16 @@ function Onboarding({ onComplete }) {
               ))}
             </div>
 
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 10, letterSpacing: "0.5px" }}>¿Por qué has fallado antes? (selecciona los que apliquen)</div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 10, letterSpacing: "0.5px" }}>¿Por qué has fallado antes?</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-              {FALLOS.map(f => (
+              {[
+                { id: "tiempo", label: "Falta de tiempo" },
+                { id: "motivacion", label: "Pérdida de motivación" },
+                { id: "lesion", label: "Lesiones" },
+                { id: "nosabia", label: "No sabía qué hacer" },
+                { id: "primera", label: "Es mi primera vez" },
+                { id: "rutina", label: "No encontré una rutina que me encajara" },
+              ].map(f => (
                 <button key={f.id} onClick={() => toggleFallo(f.id)} style={{ padding: "9px 14px", borderRadius: 20, background: form.fallos.includes(f.id) ? "rgba(255,193,7,0.1)" : "rgba(255,255,255,0.04)", border: `1px solid ${form.fallos.includes(f.id) ? "#ffc107" : "rgba(255,255,255,0.1)"}`, color: form.fallos.includes(f.id) ? "#ffc107" : "rgba(255,255,255,0.5)", fontSize: 13, cursor: "pointer", transition: "all 0.18s" }}>
                   {f.label}
                 </button>
@@ -404,16 +389,23 @@ export default function App() {
     const snap = food.trim();
     setAiState("loading"); setFeedback(null);
     try {
-      const res = await fetch("/api/chat", {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY || "",
+          "anthropic-version": "2023-06-01",
+          "dangerouslyAllowBrowser": "true"
+        },
         body: JSON.stringify({
+          model: "claude-3-5-sonnet-20241022",
+          max_tokens: 1024,
           system: "Eres un nutricionista deportivo de alto rendimiento. Analiza con precisión técnica lo que come el usuario. Responde SÓLO con JSON válido, sin bloques de código, sin texto adicional.",
           messages: [{ role: "user", content: `Evalúa para atleta con físico atlético funcional: "${snap}"\nJSON esperado: {"ok":true,"emoji":"✅","msg":"frase concisa max 8 palabras","pro":"alta","carbs":"medios"}` }],
         })
       });
       const json = await res.json();
-      const raw = json.content?.find(c => c.type === "text")?.text ?? "{}";
+      const raw = json.content?.[0]?.text ?? "{}";
       const parsedFeedback = JSON.parse(raw.replace(/```json?|```/g, "").trim());
       const t = new Date().toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
       setFeedback(parsedFeedback);
@@ -433,30 +425,6 @@ export default function App() {
     }
   };
 
-  if (!data) return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: C.bg }}>
-      <div style={{ color: C.accent, fontFamily: "monospace", letterSpacing: "5px", fontSize: 11, animation: "pulse 1.4s infinite" }}>
-        INICIANDO...
-      </div>
-    </div>
-  );
-
-  if (!data.profile) return <Onboarding onComplete={handleOnboardingComplete} />;
-
-  const td = dayOf(data);
-  const streak = calcStreak(data);
-  const workout = WORKOUTS.find(w => w.tag === TODAY_DOW) ?? WORKOUTS[0];
-  const dots = weekDots(data);
-  const totalSessions = Object.values(data.days ?? {}).filter(d => d.done).length;
-  const doneHabits = HABITS.filter(h => td.habits?.[h.id]).length;
-  const navItems = [
-    { id: "hoy", icon: "⚡", label: "HOY" },
-    { id: "entreno", icon: "💪", label: "ENTRENO" },
-    { id: "comida", icon: "🍽️", label: "COMIDA" },
-    { id: "coach", icon: "🧠", label: "COACH" },
-    { id: "stats", icon: "📊", label: "STATS" },
-  ];
-
   const sendCoach = async () => {
     if (!coachInput.trim() || coachLoading) return;
     const userMsg = coachInput.trim();
@@ -468,6 +436,7 @@ export default function App() {
 
     const p = data.profile ?? {};
     const todayData = dayOf(data);
+    const workout = WORKOUTS.find(w => w.tag === TODAY_DOW) ?? WORKOUTS[0];
     const objetivoLabel = {
       recuperacion: "Recuperación muscular", deporte: "Volver al deporte",
       definicion: "Definición y estética", masa: "Ganar masa muscular",
@@ -494,7 +463,7 @@ REGISTRO DE HOY (${TODAY} — ${TODAY_DOW}):
 - Hábitos cubiertos: Agua ${todayData.habits?.agua ? "✓" : "✗"} | Proteína ${todayData.habits?.pro ? "✓" : "✗"} | Sueño ${todayData.habits?.sleep ? "✓" : "✗"} | Ducha fría ${todayData.habits?.ducha ? "✓" : "✗"} | Movilidad ${todayData.habits?.movil ? "✓" : "✗"}
 
 FILOSOFÍA DE EJECUCIÓN:
-- Ejecución perfecta > volumen basura.
+- Execution perfecta > volumen basura.
 - Cero paternalismo. Si detectas justificaciones o mentalidad débil, corrige de forma directa y seca.
 - Enfoque radical en consistencia y escalabilidad física.
 
@@ -504,22 +473,53 @@ INSTRUCCIONES DE RESPUESTA:
 - Si pide ajustes técnicos, dale los "cues" exactos sin rodeos.`;
 
     try {
-      const res = await fetch("/api/chat", {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY || "",
+          "anthropic-version": "2023-06-01",
+          "dangerouslyAllowBrowser": "true"
+        },
         body: JSON.stringify({
+          model: "claude-3-5-sonnet-20241022",
+          max_tokens: 1024,
           system: systemPrompt,
           messages: updatedMessages.map(m => ({ role: m.role, content: m.content })),
         })
       });
       const json = await res.json();
-      const reply = json.content?.find(c => c.type === "text")?.text ?? "Error al procesar la respuesta del Coach.";
+      const reply = json.content?.[0]?.text ?? "Error al procesar la respuesta del Coach.";
       setCoachMessages(prev => [...prev, { role: "assistant", content: reply }]);
-    } catch {
+    } catch (err) {
       setCoachMessages(prev => [...prev, { role: "assistant", content: "Error de red al conectar con Jarvis Coach. Reintenta." }]);
     }
     setCoachLoading(false);
   };
+
+  if (!data) return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: C.bg }}>
+      <div style={{ color: C.accent, fontFamily: "monospace", letterSpacing: "5px", fontSize: 11, animation: "pulse 1.4s infinite" }}>
+        INICIANDO...
+      </div>
+    </div>
+  );
+
+  if (!data.profile) return <Onboarding onComplete={handleOnboardingComplete} />;
+
+  const td = dayOf(data);
+  const streak = calcStreak(data);
+  const workout = WORKOUTS.find(w => w.tag === TODAY_DOW) ?? WORKOUTS[0];
+  const dots = weekDots(data);
+  const totalSessions = Object.values(data.days ?? {}).filter(d => d.done).length;
+  const doneHabits = HABITS.filter(h => td.habits?.[h.id]).length;
+  const navItems = [
+    { id: "hoy", icon: "⚡", label: "HOY" },
+    { id: "entreno", icon: "💪", label: "ENTRENO" },
+    { id: "comida", icon: "🍽️", label: "COMIDA" },
+    { id: "coach", icon: "🧠", label: "COACH" },
+    { id: "stats", icon: "📊", label: "STATS" },
+  ];
 
   return (
     <>
@@ -538,7 +538,6 @@ INSTRUCCIONES DE RESPUESTA:
 
       <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", background: C.bg, color: "#fff", fontFamily: "'Outfit', sans-serif", paddingBottom: 74 }}>
 
-        {/* HEADER */}
         <header style={{ padding: "18px 20px 14px", background: C.surface, borderBottom: `1px solid ${C.bdr}`, position: "sticky", top: 0, zIndex: 20 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
@@ -554,7 +553,6 @@ INSTRUCCIONES DE RESPUESTA:
 
         <main style={{ padding: "0 16px" }}>
 
-          {/* HOY */}
           {tab === "hoy" && (
             <div className="fade" style={{ paddingTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
               <button onClick={toggleWorkout} style={{ width: "100%", padding: "18px 20px", borderRadius: 14, background: td.done ? "rgba(0,232,124,0.07)" : C.card, border: `1px solid ${td.done ? C.green : C.bdr}`, cursor: "pointer", transition: "all 0.25s", textAlign: "left", animation: flash ? "glow 0.7s ease" : "none" }}>
@@ -616,11 +614,8 @@ INSTRUCCIONES DE RESPUESTA:
             </div>
           )}
 
-          {/* ENTRENO */}
           {tab === "entreno" && (
             <div className="fade" style={{ paddingTop: 14 }}>
-
-              {/* MODO TOGGLE */}
               <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
                 <button onClick={() => setParkMode(false)} style={{ flex: 1, padding: "10px", borderRadius: 10, background: !parkMode ? "rgba(0,207,255,0.12)" : C.dim, border: `1px solid ${!parkMode ? C.accent : "transparent"}`, color: !parkMode ? C.accent : C.muted, fontFamily: "'Bebas Neue'", fontSize: 16, letterSpacing: "1.5px", cursor: "pointer", transition: "all 0.2s" }}>
                   🏠 CASA
@@ -682,7 +677,6 @@ INSTRUCCIONES DE RESPUESTA:
             </div>
           )}
 
-          {/* COMIDA */}
           {tab === "comida" && (
             <div className="fade" style={{ paddingTop: 14 }}>
               <div style={{ background: C.card, borderRadius: 14, border: `1px solid ${C.bdr}`, padding: 16, marginBottom: 12 }}>
@@ -722,7 +716,6 @@ INSTRUCCIONES DE RESPUESTA:
             </div>
           )}
 
-          {/* COACH */}
           {tab === "coach" && (
             <div className="fade" style={{ paddingTop: 14, display: "flex", flexDirection: "column", height: "calc(100vh - 130px)" }}>
 
@@ -786,7 +779,6 @@ INSTRUCCIONES DE RESPUESTA:
             </div>
           )}
 
-          {/* STATS */}
           {tab === "stats" && (
             <div className="fade" style={{ paddingTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
@@ -832,7 +824,6 @@ INSTRUCCIONES DE RESPUESTA:
 
         </main>
 
-        {/* BOTTOM NAV */}
         <nav style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, background: C.surface, borderTop: `1px solid ${C.bdr}`, display: "flex", zIndex: 100 }}>
           {navItems.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3, padding: "8px 0 10px", cursor: "pointer", background: "none", border: "none", borderTop: `2px solid ${tab === t.id ? C.accent : "transparent"}`, color: tab === t.id ? C.accent : C.muted, transition: "color 0.18s", fontSize: 10, fontWeight: 500, letterSpacing: "0.5px", textTransform: "uppercase" }}>
