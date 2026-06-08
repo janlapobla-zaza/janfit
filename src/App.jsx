@@ -3,49 +3,142 @@ import { useState, useEffect, useCallback } from "react";
 const TODAY = new Date().toISOString().split("T")[0];
 const DATE_DISPLAY = new Date().toLocaleDateString("es", { weekday: "long", day: "numeric", month: "short" });
 
-const ALL_HABITS_POOL = [
+const HABITS = [
   { id: "agua", icon: "💧", label: "Agua (2L+)" },
   { id: "pro", icon: "🥩", label: "Proteína cubierta" },
-  { id: "sleep", icon: "😴", label: "Dormir 7-8h" },
-  { id: "pasos", icon: "👟", label: "Pasos diarios" },
+  { id: "sleep", icon: "😴", label: "Dormí bien" },
   { id: "ducha", icon: "🧊", label: "Ducha fría" },
-  { id: "movil", icon: "🔄", label: "Movilidad / Stretching" },
-  { id: "meditar", icon: "🧘", label: "Foco / Meditación" }
+  { id: "movil", icon: "🔄", label: "Movilidad / stretching" },
 ];
 
 const DAY_MAP = ["DOM","LUN","MAR","MIÉ","JUE","VIE","SÁB"];
 const TODAY_DOW = DAY_MAP[new Date().getDay()];
 
 const WORKOUTS = [
-  { tag: "LUN", name: "PUSH — Pecho · Hombro · Tríceps", ex: [["Slow push-ups", "3 × 5–6", "Bajada 4s, pausa, sube controlado"], ["Incline push-ups", "3 × 5–6", "Pies elevados, pecho superior"], ["Pike push-ups", "3 × 5", "Cadera alta, hombros al frente"], ["Tricep dips", "3 × 6", "Bajada lenta 3s, codos atrás"]] },
-  { tag: "MAR", name: "PULL — Espalda · Bíceps · Postura", ex: [["Australian Rows", "3 × 5–6", "Cuerpo rígido, escápulas al final"], ["Dead Hang", "3 × 20–30s", "Hombros activos, no pasivo"], ["Scapular Pulls", "3 × 6", "Solo escápulas, sin doblar codos"]] },
-  { tag: "MIÉ", name: "ACTIVO — Movilidad · Recuperación", ex: [["Movilidad cadera", "2 × 60s", "90/90, sin forzar"], ["Movilidad torácica", "2 × 8", "Cat-cow + rotaciones"], ["Stretching", "10 min", "Sin rebotes, respiración lenta"]] },
-  { tag: "JUE", name: "PIERNA + REHAB — Estabilidad · Glúteo", ex: [["Sentadilla controlada", "3 × 6", "Bajada 3s, rodilla alineada"], ["Step-ups", "3 × 5 c/l", "Control total, glúteo activo"], ["Glute bridge", "3 × 8", "Aprieta glúteo 2s arriba"]] },
-  { tag: "VIE", name: "UPPER ESTÉTICO — Pump · Brazos", ex: [["Elevaciones laterales", "4 × 6–8", "Sube lento, baja más lento"], ["Press militar", "3 × 5–6", "Con mochila o tensión consciente"], ["Curl concentrado", "3 × 6", "Codo fijo, supinación arriba"]] },
-  { tag: "SÁB", name: "ACTIVO LIBRE", ex: [["Moverse libre", "", "Esquí, caminar o deporte libre"]] },
-  { tag: "DOM", name: "RESET — Recuperación", ex: [["Stretching completo", "15 min", "Todo el cuerpo, sin prisa"], ["Movilidad tobillo", "5 min", "Preparar semana"]] }
+  { tag: "LUN", name: "PUSH — Pecho · Hombro · Tríceps", ex: [
+    ["Slow push-ups", "3 × 5–6", "Bajada 4s, pausa abajo, sube controlado"],
+    ["Incline push-ups", "3 × 5–6", "Pies elevados, pecho superior, sin colapsar"],
+    ["Pike push-ups", "3 × 5", "Cadera alta, hombros al frente, tensión consciente"],
+    ["Tricep dips (silla)", "3 × 6", "Bajada lenta 3s, codos atrás sin abrirse"],
+    ["Diamond push-ups", "3 × 5", "Codos pegados, siente el tríceps en cada rep"],
+    ["Hollow hold (borde cama)", "3 × 20s", "Retroversión, esconder cola, respiración corta"],
+    ["Rehab tobillo", "2 min", "Tibialis raises + equilibrio monopodal"],
+  ]},
+  { tag: "MAR", name: "PULL — Espalda · Bíceps · Postura", ex: [
+    ["Australian Rows", "3 × 5–6", "Cuerpo rígido, escápulas al final, bajada lenta"],
+    ["Dead Hang", "3 × 20–30s", "Hombros activos, no pasivo, respira"],
+    ["Scapular Pulls", "3 × 6", "Solo escápulas, sin doblar codos"],
+    ["Remo con mochila", "3 × 5 c/l", "Codo 90° arriba, pausa arriba 1s"],
+    ["Face pulls (toalla)", "3 × 8", "Deltoide posterior, control escapular total"],
+    ["Curl martillo", "3 × 6", "Tensión lenta, sin balanceo, siente el bíceps"],
+    ["Core ligero", "2 × 20s", "Dead bug o bird dog, sin prisa"],
+  ]},
+  { tag: "MIÉ", name: "ACTIVO — Movilidad · Recuperación", ex: [
+    ["Movilidad cadera", "2 × 60s c/l", "90/90, círculos, sin forzar"],
+    ["Movilidad torácica", "2 × 8", "Cat-cow + rotaciones lentas"],
+    ["Core técnico", "3 × 20s", "Dead bug o bird dog, control respiratorio"],
+    ["Rehab tobillo", "5 min", "Propiocepción + movilidad completa"],
+    ["Stretching", "10 min", "Sin rebotes, respiración lenta, disfruta"],
+  ]},
+  { tag: "JUE", name: "PIERNA + REHAB — Estabilidad · Glúteo", ex: [
+    ["Sentadilla controlada", "3 × 6", "Bajada 3s, rodilla alineada, talón pegado"],
+    ["Step-ups", "3 × 5 c/l", "Control total, no impulso, glúteo activo"],
+    ["Glute bridge", "3 × 8", "Aprieta glúteo 2s arriba, sin acelerar"],
+    ["Calf raise", "3 × 8", "Lento, rango completo, tobillo estable"],
+    ["Tibialis raises", "3 × 10", "Contra pared, punta arriba controlada"],
+    ["Balance unilateral", "3 × 30s", "Progresivo, ojos cerrados si puedes"],
+    ["Hollow hold", "3 × 20s", "Core profundo, retroversión activa"],
+  ]},
+  { tag: "VIE", name: "UPPER ESTÉTICO — Pump · Hombros · Brazos", ex: [
+    ["Elevaciones laterales", "4 × 6–8", "Sin impulso, sube lento, baja más lento"],
+    ["Press militar (mochila)", "3 × 5–6", "Tensión consciente, hombros 3D"],
+    ["Slow push-ups explosivas", "3 × 5", "Bajada 3s, subida potente controlada"],
+    ["Curl concentrado", "3 × 6", "Codo fijo, supinación arriba, pausa 1s"],
+    ["Hollow hold progresivo", "3 × 25s", "Cada semana unos segundos más"],
+    ["Postura final", "5 min", "Pecho abierto, escápulas abajo, respira"],
+  ]},
+  { tag: "SÁB", name: "ACTIVO LIBRE", ex: [
+    ["Caminar, esquí, movilidad o deporte libre", "", "Sin estructura. Muévete y disfruta."],
+  ]},
+  { tag: "DOM", name: "RESET — Recuperación", ex: [
+    ["Stretching completo", "15 min", "Todo el cuerpo, sin prisa"],
+    ["Movilidad tobillo", "5 min", "Preparar semana"],
+    ["Respiración / mindfulness", "5 min", "Reset mental y físico"],
+  ]},
+];
+
+const PARK_WORKOUT = [
+  ["Australian Rows (barra baja)", "3 × 5–6", "Cuerpo rígido, escápulas al final"],
+  ["Dead Hang", "3 × 20–30s", "Hombros activos, respira, descomprime"],
+  ["Scapular Pulls", "3 × 6", "Solo escápulas, sin doblar codos"],
+  ["Monkey Bars suaves", "2 pasadas", "Control, sin balanceo, tranquilo"],
+  ["Push-ups lentas", "3 × 5", "Bajada 4s, pausa, sube controlado"],
+  ["Step-ups (banco)", "3 × 5 c/l", "Glúteo activo, sin impulso"],
+  ["Balance unilateral", "3 × 30s", "Tobillo fuerte, ojos cerrados si puedes"],
+  ["Tibialis Raises", "3 × 10", "Contra pared o bordillo"],
+  ["Hollow Hold progresivo", "3 × 20s", "Retroversión, respiración corta"],
 ];
 
 const SK = "jfit-v2";
+
 function loadData() {
   try {
     const r = localStorage.getItem(SK);
-    if (r) return JSON.parse(r).value ? JSON.parse(JSON.parse(r).value) : JSON.parse(r);
+    if (r) {
+      const parsed = JSON.parse(r);
+      return parsed.value ? JSON.parse(parsed.value) : parsed;
+    }
   } catch {}
   return { days: {}, wIdx: 0, profile: null };
 }
-function saveData(d) { try { localStorage.setItem(SK, JSON.stringify(d)); } catch {} }
+
+function saveData(d) {
+  try { localStorage.setItem(SK, JSON.stringify(d)); } catch {}
+}
+
 const dayOf = (data) => data?.days?.[TODAY] ?? { done: false, meals: [], habits: {}, notes: "" };
 
-const C = { bg: "#07070f", surface: "#0b0b18", card: "#0f0f1f", bdr: "rgba(0,207,255,0.1)", accent: "#00cfff", green: "#00e87c", amber: "#ffc107", muted: "rgba(255,255,255,0.38)", dim: "rgba(255,255,255,0.06)" };
+function calcStreak(data) {
+  if (!data || !data.days) return 0;
+  const d = new Date(); let s = 0;
+  for (let i = 0; i < 365; i++) {
+    const k = d.toISOString().split("T")[0];
+    if (!data.days?.[k]?.done) break;
+    s++; d.setDate(d.getDate() - 1);
+  }
+  return s;
+}
+
+function weekDots(data) {
+  const d = new Date(), dow = d.getDay();
+  d.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1));
+  return Array.from({ length: 7 }, () => {
+    const k = d.toISOString().split("T")[0];
+    const dot = { k, done: !!data?.days?.[k]?.done, isToday: k === TODAY, label: d.toLocaleDateString("es", { weekday: "short" })[0].toUpperCase() };
+    d.setDate(d.getDate() + 1);
+    return dot;
+  });
+}
+
+const C = {
+  bg: "#07070f", surface: "#0b0b18", card: "#0f0f1f",
+  bdr: "rgba(0,207,255,0.1)", accent: "#00cfff", green: "#00e87c",
+  amber: "#ffc107", muted: "rgba(255,255,255,0.38)", dim: "rgba(255,255,255,0.06)",
+};
 
 function Onboarding({ onComplete }) {
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState({ nombre: "", edad: "", sexo: "", historial: "", lesiones: "", objetivo: "", dias: "", ritmo: "", fallos: [], habitosElegidos: ["agua", "pro", "sleep"] });
+  const [form, setForm] = useState({
+    nombre: "", edad: "", sexo: "",
+    historial: "", lesiones: "",
+    objetivo: "", dias: "",
+    ritmo: "", fallos: [],
+  });
 
-  const toggleHabit = (id) => setForm(f => ({
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const toggleFallo = (id) => setForm(f => ({
     ...f,
-    habitosElegidos: f.habitosElegidos.includes(id) ? f.habitosElegidos.filter(x => x !== id) : [...f.habitosElegidos, id]
+    fallos: f.fallos.includes(id) ? f.fallos.filter(x => x !== id) : [...f.fallos, id]
   }));
 
   const next = () => setStep(s => s + 1);
@@ -53,87 +146,123 @@ function Onboarding({ onComplete }) {
     if (step === 1) return form.nombre && form.edad && form.sexo;
     if (step === 2) return form.historial;
     if (step === 3) return form.objetivo;
-    if (step === 4) return form.dias && form.ritmo && form.habitosElegidos.length > 0;
+    if (step === 4) return form.dias && form.ritmo;
     return true;
   };
 
+  const finish = () => onComplete(form);
+
   return (
-    <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", background: "#07070f", color: "#fff", fontFamily: "'Outfit', sans-serif", padding: "40px 20px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap'); *{box-sizing:border-box;} button:disabled{opacity:0.3; cursor:not-allowed;}`}</style>
-      
-      {step === 0 && (
-        <div style={{ textAlign: "center" }}>
-          <div style={{ fontFamily: "'Bebas Neue'", fontSize: 72, color: "#00cfff", lineHeight: 1 }}>JARVIS</div>
-          <div style={{ fontFamily: "'Bebas Neue'", fontSize: 24, color: "#00e87c", letterSpacing: "3px", marginBottom: 20 }}>FIT</div>
-          <p style={{ color: C.muted, marginBottom: 40 }}>Anamnesis de rendimiento de alto nivel. Define tu punto de partida.</p>
-          <button onClick={next} style={{ width: "100%", padding: 16, background: "rgba(0,207,255,0.1)", border: "1px solid #00cfff", color: "#00cfff", fontFamily: "'Bebas Neue'", fontSize: 20, cursor: "pointer" }}>INICIAR EVALUACIÓN</button>
-        </div>
-      )}
-
-      {step === 1 && (
-        <div>
-          <h2 style={{ fontFamily: "'Bebas Neue'", fontSize: 30, marginBottom: 20 }}>01 / IDENTIDAD</h2>
-          <input type="text" placeholder="Tu nombre" value={form.nombre} onChange={e=>setForm({...form, nombre: e.target.value})} style={{ width:"100%", padding:14, background:C.card, border:`1px solid ${C.bdr}`, color:"#fff", marginBottom:10 }} />
-          <input type="number" placeholder="Edad" value={form.edad} onChange={e=>setForm({...form, edad: e.target.value})} style={{ width:"100%", padding:14, background:C.card, border:`1px solid ${C.bdr}`, color:"#fff", marginBottom:20 }} />
-          <div style={{ display:"flex", gap:10 }}>
-            {["Hombre", "Mujer"].map(s => <button key={s} onClick={()=>setForm({...form, sexo:s})} style={{ flex:1, padding:12, background:form.sexo===s? "rgba(0,207,255,0.15)":C.card, border:`1px solid ${form.sexo===s? C.accent:C.bdr}`, color:"#fff" }}>{s}</button>)}
-          </div>
-        </div>
-      )}
-
-      {step === 2 && (
-        <div>
-          <h2 style={{ fontFamily: "'Bebas Neue'", fontSize: 30, marginBottom: 10 }}>02 / ANTECEDENTES</h2>
-          <p style={{ fontSize:13, color:C.muted, marginBottom:15 }}>Historial deportivo y lesiones activas:</p>
-          <textarea placeholder="Ej: Calistenia intermedia, esquí los findes..." value={form.historial} onChange={e=>setForm({...form, historial: e.target.value})} style={{ width:"100%", padding:12, background:C.card, border:`1px solid ${C.bdr}`, color:"#fff", height:80, resize:"none", marginBottom:10 }} />
-          <textarea placeholder="Lesiones o dolores (Ej: Molestia en tobillo izquierdo)" value={form.lesiones} onChange={e=>setForm({...form, lesiones: e.target.value})} style={{ width:"100%", padding:12, background:C.card, border:`1px solid ${C.bdr}`, color:"#fff", height:60, resize:"none" }} />
-        </div>
-      )}
-
-      {step === 3 && (
-        <div>
-          <h2 style={{ fontFamily: "'Bebas Neue'", fontSize: 30, marginBottom: 20 }}>03 / METAS</h2>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
-            {[
-              { id: "recuperacion", label: "Recuperación" }, { id: "deporte", label: "Volver al Deporte" },
-              { id: "definicion", label: "Estética / Core" }, { id: "masa", label: "Masa Muscular" }
-            ].map(o => <button key={o.id} onClick={()=>setForm({...form, objetivo:o.id})} style={{ padding:15, background:form.objetivo===o.id? "rgba(0,232,124,0.1)":C.card, border:`1px solid ${form.objetivo===o.id? C.green:C.bdr}`, color:"#fff", textAlign:"left" }}>{o.label}</button>)}
-          </div>
-        </div>
-      )}
-
-      {step === 4 && (
-        <div>
-          <h2 style={{ fontFamily: "'Bebas Neue'", fontSize: 26, marginBottom: 15 }}>04 / PLANIFICACIÓN Y HÁBITOS</h2>
-          <p style={{ fontSize:12, color:C.muted, marginBottom:8 }}>Días semanales de entreno:</p>
-          <div style={{ display:"flex", gap:5, marginBottom:15 }}>
-            {["3","4","5"].map(d => <button key={d} onClick={()=>setForm({...form, dias:d})} style={{ flex:1, padding:10, background:form.dias===d?"rgba(0,207,255,0.15)":C.card, border:`1px solid ${form.dias===d?C.accent:C.bdr}`, color:"#fff" }}>{d}</button>)}
-          </div>
-          <p style={{ fontSize:12, color:C.muted, marginBottom:8 }}>Ritmo de vida actual:</p>
-          <div style={{ display:"flex", gap:5, marginBottom:15 }}>
-            {["activo","caotico"].map(r => <button key={r} onClick={()=>setForm({...form, ritmo:r})} style={{ flex:1, padding:10, background:form.ritmo===r?"rgba(0,207,255,0.15)":C.card, border:`1px solid ${form.ritmo===r?C.accent:C.bdr}`, color:"#fff", textTransform:"capitalize" }}>{r}</button>)}
-          </div>
-          <p style={{ fontSize:12, color:C.accent, fontWeight:600, marginBottom:8 }}>SELECCIONA TUS HÁBITOS CLAVE:</p>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6, maxHeight:140, overflowY:"auto", padding:2 }}>
-            {ALL_HABITS_POOL.map(h => {
-              const active = form.habitosElegidos.includes(h.id);
-              return <button key={h.id} onClick={()=>toggleHabit(h.id)} style={{ padding:8, fontSize:12, background:active?"rgba(0,232,124,0.08)":C.card, border:`1px solid ${active?C.green:C.bdr}`, color:"#fff", textAlign:"left", display:"flex", gap:6 }}><span>{h.icon}</span>{h.label}</button>;
-            })}
-          </div>
-        </div>
-      )}
-
-      {step === 5 && (
-        <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: 50, marginBottom: 10 }}>⚡</div>
-          <h2 style={{ fontFamily: "'Bebas Neue'", fontSize: 32, color: C.green }}>ANAMNESIS COMPLETADA</h2>
-          <p style={{ color:C.muted, fontSize:14, marginBottom:30, lineHeight:1.6 }}>Tu entorno de alto rendimiento está listo. El único que te para eres tú.</p>
-          <button onClick={finish} style={{ width: "100%", padding: 16, background: "rgba(0,232,124,0.15)", border: "1px solid #00e87c", color: "#00e87c", fontFamily: "'Bebas Neue'", fontSize: 20, cursor: "pointer" }}>ENTRAR AL SISTEMA</button>
-        </div>
-      )}
+    <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", background: "#07070f", color: "#fff", fontFamily: "'Outfit', sans-serif", display: "flex", flexDirection: "column" }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap'); *{box-sizing:border-box;margin:0;padding:0;} input::placeholder{color:rgba(255,255,255,0.25);} @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}`}</style>
 
       {step > 0 && step < 5 && (
-        <button onClick={next} disabled={!canNext()} style={{ width: "100%", marginTop: 25, padding: 14, background: canNext()?"rgba(0,207,255,0.12)":C.dim, border: `1px solid ${canNext()?C.accent:C.dim}`, color: canNext()?C.accent:C.muted, fontFamily: "'Bebas Neue'", fontSize: 18, cursor:"pointer" }}>SIGUIENTE →</button>
+        <div style={{ height: 2, background: "rgba(255,255,255,0.05)", position: "relative" }}>
+          <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${(step / 5) * 100}%`, background: "#00cfff", transition: "width 0.4s ease", borderRadius: 2 }} />
+        </div>
+      )}
+
+      <div style={{ flex: 1, padding: "0 20px", display: "flex", flexDirection: "column", justifyContent: "center", animation: "fadeUp 0.3s ease" }} key={step}>
+
+        {step === 0 && (
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontFamily: "'Bebas Neue'", fontSize: 72, color: "#00cfff", lineHeight: 1, marginBottom: 8 }}>JARVIS</div>
+            <div style={{ fontFamily: "'Bebas Neue'", fontSize: 24, color: "#00e87c", letterSpacing: "3px", marginBottom: 28 }}>FIT</div>
+            <div style={{ fontSize: 16, color: "rgba(255,255,255,0.7)", lineHeight: 1.7, marginBottom: 12 }}>Antes de entrenar, necesito conocerte.</div>
+            <div style={{ fontSize: 14, color: "rgba(255,255,255,0.38)", lineHeight: 1.7, marginBottom: 40 }}>No soy una app genérica. Cuanto más honesto seas,<br/>más preciso será tu sistema.</div>
+            <button onClick={next} style={{ width: "100%", padding: "16px", borderRadius: 12, background: "rgba(0,207,255,0.12)", border: "1px solid #00cfff", color: "#00cfff", fontFamily: "'Bebas Neue'", fontSize: 22, letterSpacing: "3px", cursor: "pointer" }}>EMPEZAR</button>
+          </div>
+        )}
+
+        {step === 1 && (
+          <div>
+            <div style={{ fontFamily: "'DM Mono'", fontSize: 10, color: "#00cfff", letterSpacing: "4px", marginBottom: 8 }}>01 / QUIÉN ERES</div>
+            <div style={{ fontFamily: "'Bebas Neue'", fontSize: 34, lineHeight: 1.1, marginBottom: 20 }}>HÁBLAME DE TI</div>
+            <input type="text" placeholder="Tu nombre" value={form.nombre} onChange={e => set("nombre", e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(0,207,255,0.15)", borderRadius: 10, padding: "13px 14px", color: "#fff", fontSize: 15, outline: "none", marginBottom: 10 }} />
+            <input type="number" placeholder="Edad" value={form.edad} onChange={e => set("edad", e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(0,207,255,0.15)", borderRadius: 10, padding: "13px 14px", color: "#fff", fontSize: 15, outline: "none", marginBottom: 10 }} />
+            <div style={{ display: "flex", gap: 8 }}>
+              {["Hombre", "Mujer"].map(s => (
+                <button key={s} onClick={() => set("sexo", s)} style={{ flex: 1, padding: "13px 8px", borderRadius: 10, background: form.sexo === s ? "rgba(0,207,255,0.12)" : "rgba(255,255,255,0.04)", border: `1px solid ${form.sexo === s ? "#00cfff" : "rgba(255,255,255,0.1)"}`, color: "#fff", fontSize: 14, cursor: "pointer" }}>{s}</button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div>
+            <div style={{ fontFamily: "'DM Mono'", fontSize: 10, color: "#00cfff", letterSpacing: "4px", marginBottom: 8 }}>02 / DE DÓNDE VIENES</div>
+            <div style={{ fontFamily: "'Bebas Neue'", fontSize: 34, lineHeight: 1.1, marginBottom: 20 }}>TU HISTORIAL</div>
+            <textarea placeholder="Historial deportivo (ej: Calistenia, fútbol...)" value={form.historial} onChange={e => set("historial", e.target.value)} rows={3} style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(0,207,255,0.15)", borderRadius: 10, padding: "13px 14px", color: "#fff", fontSize: 14, outline: "none", resize: "none", marginBottom: 16 }} />
+            <textarea placeholder="Lesiones u operaciones relevantes (opcional)" value={form.lesiones} onChange={e => set("lesiones", e.target.value)} rows={2} style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(0,207,255,0.15)", borderRadius: 10, padding: "13px 14px", color: "#fff", fontSize: 14, outline: "none", resize: "none" }} />
+          </div>
+        )}
+
+        {step === 3 && (
+          <div>
+            <div style={{ fontFamily: "'DM Mono'", fontSize: 10, color: "#00cfff", letterSpacing: "4px", marginBottom: 8 }}>03 / A DÓNDE VAS</div>
+            <div style={{ fontFamily: "'Bebas Neue'", fontSize: 34, lineHeight: 1.1, marginBottom: 20 }}>TU OBJETIVO</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              {[
+                { id: "recuperacion", icon: "🩹", label: "Recuperación muscular" },
+                { id: "deporte", icon: "⛷️", label: "Volver al deporte" },
+                { id: "definicion", icon: "🔥", label: "Definición y estética" },
+                { id: "masa", icon: "💪", label: "Ganar masa muscular" }
+              ].map(o => (
+                <button key={o.id} onClick={() => set("objetivo", o.id)} style={{ padding: "14px 12px", borderRadius: 12, background: form.objetivo === o.id ? "rgba(0,232,124,0.1)" : "rgba(255,255,255,0.03)", border: `1px solid ${form.objetivo === o.id ? "#00e87c" : "rgba(255,255,255,0.08)"}`, color: "#fff", cursor: "pointer", textAlign: "left" }}>
+                  <div style={{ fontSize: 22, marginBottom: 6 }}>{o.icon}</div>
+                  <div style={{ fontSize: 13, fontWeight: 500 }}>{o.label}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {step === 4 && (
+          <div>
+            <div style={{ fontFamily: "'DM Mono'", fontSize: 10, color: "#00cfff", letterSpacing: "4px", marginBottom: 8 }}>04 / TU RITMO</div>
+            <div style={{ fontFamily: "'Bebas Neue'", fontSize: 34, lineHeight: 1.1, marginBottom: 20 }}>CÓMO ES TU VIDA</div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 10 }}>Días que puedes entrenar:</div>
+            <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
+              {["1","2","3","4","5","6","7"].map(d => (
+                <button key={d} onClick={() => set("dias", d)} style={{ flex: 1, padding: "10px 0", borderRadius: 10, background: form.dias === d ? "rgba(0,207,255,0.12)" : "rgba(255,255,255,0.04)", border: `1px solid ${form.dias === d ? "#00cfff" : "rgba(255,255,255,0.1)"}`, color: "#fff", fontSize: 14, fontWeight: 600 }}>{d}</button>
+              ))}
+            </div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 10 }}>Tu ritmo de vida:</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {[
+                { id: "tranquilo", icon: "🌿", label: "Tranquilo", sub: "Días ordenados, poco estrés" },
+                { id: "activo", icon: "⚡", label: "Activo", sub: "Siempre en movimiento, productivo" },
+                { id: "caotico", icon: "🌪️", label: "Caótico", sub: "Horarios irregulares, mucha variación" },
+              ].map(r => (
+                <button key={r.id} onClick={() => set("ritmo", r.id)} style={{ padding: "12px 16px", borderRadius: 12, background: form.ritmo === r.id ? "rgba(0,207,255,0.08)" : "rgba(255,255,255,0.03)", border: `1px solid ${form.ritmo === r.id ? "#00cfff" : "rgba(255,255,255,0.08)"}`, color: "#fff", textAlign: "left", display: "flex", alignItems: "center", gap: 14 }}>
+                  <span style={{ fontSize: 22 }}>{r.icon}</span>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: form.ritmo === r.id ? "#00cfff" : "#fff" }}>{r.label}</div>
+                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{r.sub}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {step === 5 && (
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 64, marginBottom: 16 }}>🔥</div>
+            <div style={{ fontFamily: "'Bebas Neue'", fontSize: 38, color: "#00e87c", marginBottom: 8 }}>LISTO, {form.nombre.toUpperCase()}</div>
+            <div style={{ fontSize: 15, color: "rgba(255,255,255,0.6)", lineHeight: 1.7, marginBottom: 40 }}>Tu perfil de rendimiento está creado.<br />El único que puede pararte eres tú.</div>
+            <button onClick={finish} style={{ width: "100%", padding: "16px", borderRadius: 12, background: "rgba(0,232,124,0.12)", border: "1px solid #00e87c", color: "#00e87c", fontFamily: "'Bebas Neue'", fontSize: 22, letterSpacing: "3px", cursor: "pointer" }}>EMPEZAR A ENTRENAR</button>
+          </div>
+        )}
+
+      </div>
+
+      {step > 0 && step < 5 && (
+        <div style={{ padding: "16px 20px 28px" }}>
+          <button onClick={next} disabled={!canNext()} style={{ width: "100%", padding: "15px", borderRadius: 12, background: canNext() ? "rgba(0,207,255,0.12)" : "rgba(255,255,255,0.03)", border: `1px solid ${canNext() ? "#00cfff" : "rgba(255,255,255,0.08)"}`, color: canNext() ? "#00cfff" : "rgba(255,255,255,0.2)", fontFamily: "'Bebas Neue'", fontSize: 20, letterSpacing: "2px", cursor: canNext() ? "pointer" : "not-allowed" }}>
+            {step === 4 ? "VER MI PERFIL" : "CONTINUAR →"}
+          </button>
+        </div>
       )}
     </div>
   );
@@ -145,6 +274,8 @@ export default function App() {
   const [food, setFood] = useState("");
   const [aiState, setAiState] = useState("idle");
   const [feedback, setFeedback] = useState(null);
+  const [flash, setFlash] = useState(false);
+  const [parkMode, setParkMode] = useState(false);
   const [coachMessages, setCoachMessages] = useState([]);
   const [coachInput, setCoachInput] = useState("");
   const [coachLoading, setCoachLoading] = useState(false);
@@ -163,150 +294,250 @@ export default function App() {
     setData(prev => {
       const td = dayOf(prev); const wasDone = td.done;
       const next = { ...prev, days: { ...prev.days, [TODAY]: { ...td, done: !wasDone } } };
-      saveData(next); return next;
+      saveData(next);
+      if (!wasDone) { setFlash(true); setTimeout(() => setFlash(false), 1000); }
+      return next;
     });
   }, []);
 
   const validateFood = async () => {
     if (!food.trim() || aiState === "loading") return;
-    setAiState("loading"); setFeedback(null);
+    const snap = food.trim(); setAiState("loading"); setFeedback(null);
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          system: "Eres nutricionista deportivo de élite. Evalúa comida de forma ultra concisa. Responde SOLO JSON puro: {\"ok\":true,\"emoji\":\"✅\",\"msg\":\"máx 6 palabras\",\"pro\":\"alta\",\"carbs\":\"medios\"}",
-          messages: [{ role: "user", content: food.trim() }]
+          system: "Eres nutricionista deportivo. Responde SÓLO con JSON válido: {\"ok\":true,\"emoji\":\"✅\",\"msg\":\"frase concisa max 6 palabras\",\"pro\":\"alta\",\"carbs\":\"medios\"}",
+          messages: [{ role: "user", content: snap }]
         })
       });
       const json = await res.json();
       const raw = json.content?.[0]?.text ?? "{}";
       const p = JSON.parse(raw.replace(/```json?|```/g, "").trim());
       setFeedback(p);
-      mutate({ meals: [...(dayOf(data).meals ?? []), { text: food.trim(), t: new Date().toLocaleTimeString("es",{hour:"2-digit",minute:"2-digit"}), ...p }] });
-      setFood(""); setAiState("done"); setTimeout(() => setAiState("idle"), 2000);
+      const t = new Date().toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
+      setData(prev => {
+        const td = dayOf(prev);
+        const next = { ...prev, days: { ...prev.days, [TODAY]: { ...td, meals: [...(td.meals ?? []), { text: snap, t, ...p }] } } };
+        saveData(next); return next;
+      });
+      setFood(""); setAiState("done"); setTimeout(() => setAiState("idle"), 2500);
     } catch {
-      setFeedback({ emoji: "❌", msg: "Error de conexión." }); setAiState("error"); setTimeout(() => setAiState("idle"), 2000);
+      setFeedback({ emoji: "❌", msg: "Error en la validación." }); setAiState("error"); setTimeout(() => setAiState("idle"), 2000);
     }
   };
 
   const sendCoach = async () => {
     if (!coachInput.trim() || coachLoading) return;
     const userMsg = coachInput.trim(); setCoachInput("");
-    const updated = [...coachMessages, { role: "user", content: userMsg }];
-    setCoachMessages(updated); setCoachLoading(true);
+    const updatedMessages = [...coachMessages, { role: "user", content: userMsg }];
+    setCoachMessages(updatedMessages); setCoachLoading(true);
 
-    const p = data.profile ?? {}; const td = dayOf(data);
-    const userHabitsList = ALL_HABITS_POOL.filter(h => p.habitosElegidos?.includes(h.id));
-
-    const systemPrompt = `Eres Jarvis Coach, mentor estratégico y preparador físico de Jan Salvat. Tono directo, seco, de alto valor, cero paternalismo. Si el atleta mete excusas de pececillo, sácale los dientes. Respuestas de máximo 2 párrafos ultra letales.
-Atleta: ${p.nombre}. Edad: ${p.edad}. Historial: ${p.historial}. Lesiones: ${p.lesiones}. Meta: ${p.objetivo}. Días: ${p.dias}. Ritmo: ${p.ritmo}.
-Hoy: Entreno: ${td.done?'COMPLETADO':'PENDIENTE'}. Notas: ${td.notes || 'Ninguna'}. Comidas: ${(td.meals??[]).map(m=>m.text).join(' | ') || 'Ninguna'}. Hábitos elegidos activos: ${userHabitsList.map(h => `${h.label}: ${td.habits?.[h.id]?'✓':'✗'}`).join(' | ')}`;
+    const p = data.profile ?? {}; const todayData = dayOf(data);
+    const workout = WORKOUTS.find(w => w.tag === TODAY_DOW) ?? WORKOUTS[0];
 
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ system: systemPrompt, messages: updated.map(m=>({role:m.role, content:m.content})) })
+        body: JSON.stringify({
+          system: "COACH_REMARK",
+          messages: updatedMessages.map(m => ({ role: m.role, content: m.content })),
+          profile: p,
+          today: { done: todayData.done, name: workout?.name, notes: todayData.notes, meals: todayData.meals, habits: todayData.habits }
+        })
       });
       const json = await res.json();
-      setCoachMessages(prev => [...prev, { role: "assistant", content: json.content?.[0]?.text ?? "Error al procesar respuesta." }]);
+      const reply = json.content?.[0]?.text ?? "Error al procesar la respuesta del Coach.";
+      setCoachMessages(prev => [...prev, { role: "assistant", content: reply }]);
     } catch {
-      setCoachMessages(prev => [...prev, { role: "assistant", content: "Error en red. Reintenta." }]);
+      setCoachMessages(prev => [...prev, { role: "assistant", content: "Error al conectar con Jarvis. Intenta de nuevo." }]);
     }
     setCoachLoading(false);
   };
 
-  if (!data) return <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100vh", background:C.bg, color:C.accent, fontFamily:"monospace" }}>INICIANDO...</div>;
+  if (!data) return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: C.bg }}><div style={{ color: C.accent, fontFamily: "monospace", letterSpacing: "5px", fontSize: 11, animation: "pulse 1.4s infinite" }}>INICIANDO...</div></div>;
   if (!data.profile) return <Onboarding onComplete={handleOnboardingComplete} />;
 
   const td = dayOf(data);
+  const streak = calcStreak(data);
   const workout = WORKOUTS.find(w => w.tag === TODAY_DOW) ?? WORKOUTS[0];
-  const userHabits = ALL_HABITS_POOL.filter(h => data.profile.habitosElegidos?.includes(h.id));
+  const dots = weekDots(data);
+  const totalSessions = Object.values(data.days ?? {}).filter(d => d.done).length;
+  const doneHabits = HABITS.filter(h => td.habits?.[h.id]).length;
 
   return (
-    <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", background: C.bg, color: "#fff", fontFamily: "'Outfit', sans-serif", paddingBottom: 80 }}>
-      <header style={{ padding: 15, background: C.surface, borderBottom: `1px solid ${C.bdr}`, display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 10 }}>
-        <div>
-          <div style={{ fontFamily:"'DM Mono'", fontSize:10, color:C.accent, letterSpacing:"3px" }}>JARVIS · FIT</div>
-          <div style={{ fontSize:12, color:C.muted, marginTop:2 }}>{DATE_DISPLAY} · {data.profile?.nombre}</div>
-        </div>
-      </header>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { background: ${C.bg}; }
+        textarea, button { font-family: 'Outfit', sans-serif; }
+        ::-webkit-scrollbar { width: 2px; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,207,255,0.15); border-radius: 2px; }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.35; } }
+        @keyframes glow { 0%,100% { box-shadow:0 0 20px rgba(0,232,124,0.1); } 50% { box-shadow:0 0 55px rgba(0,232,124,0.55); } }
+        .fade { animation: fadeUp 0.26s ease both; }
+      `}</style>
 
-      <main style={{ padding: "10px 16px" }}>
-        {tab === "hoy" && (
-          <div style={{ display:"flex", flexDirection:"column", gap:12, animation:"fadeUp 0.2s" }}>
-            <button onClick={toggleWorkout} style={{ width:"100%", padding:16, borderRadius:10, background:td.done?"rgba(0,232,124,0.06)":C.card, border:`1px solid ${td.done?C.green:C.bdr}`, textStyle:"left", color:"#fff", cursor:"pointer" }}>
-              <div style={{ fontSize:16, fontWeight:600, color:td.done?C.green:"#fff" }}>{td.done?"✓ ENTRANAMIENTO HECHO":"MARCAR ENTRENAMIENTO HOY"}</div>
-              <div style={{ fontSize:11, color:C.muted, marginTop:4 }}>Hoy toca: {workout.name}</div>
-            </button>
-
-            <div style={{ background:C.card, borderRadius:10, border:`1px solid ${C.bdr}`, overflow:"hidden" }}>
-              <div style={{ padding:12, borderBottom:`1px solid ${C.dim}`, fontSize:13, fontFamily:"'Bebas Neue'", color:C.accent }}>MIS HÁBITOS DE ANAMNESIS</div>
-              {userHabits.map(h => {
-                const done = !!td.habits?.[h.id];
-                return (
-                  <button key={h.id} onClick={()=>mutate({ habits: { ...td.habits, [h.id]: !done } })} style={{ width:"100%", display:"flex", alignItems:"center", justifyStyle:"space-between", padding:12, background:"none", border:"none", borderBottom:`1px solid ${C.dim}`, color:"#fff", cursor:"pointer" }}>
-                    <span style={{ marginRight:10 }}>{h.icon}</span>
-                    <span style={{ flex:1, textAlign:"left", fontSize:13 }}>{h.label}</span>
-                    <div style={{ width:18, height:18, border:`1px solid ${done?C.green:C.muted}`, background:done?C.green:"transparent", display:"flex", alignItems:"center", justifyContent: "center", fontSize:10 }}>{done&&"✓"}</div>
-                  </button>
-                );
-              })}
+      <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", background: C.bg, color: "#fff", fontFamily: "'Outfit', sans-serif", paddingBottom: 74 }}>
+        <header style={{ padding: "18px 20px 14px", background: C.surface, borderBottom: `1px solid ${C.bdr}`, position: "sticky", top: 0, zIndex: 20 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              <div style={{ fontFamily: "'DM Mono'", fontSize: 10, color: C.accent, letterSpacing: "4px" }}>JARVIS · FIT</div>
+              <div style={{ fontSize: 13, color: C.muted, marginTop: 3, textTransform: "capitalize" }}>{DATE_DISPLAY} · {data.profile?.nombre ?? ""}</div>
             </div>
-
-            <div style={{ background:C.card, padding:12, borderRadius:10, border:`1px solid ${C.bdr}` }}>
-              <div style={{ fontSize:12, color:C.muted, marginBottom:6 }}>SENSACIONES DEL DÍA</div>
-              <textarea value={td.notes??""} onChange={e=>mutate({notes:e.target.value})} placeholder="Energía, dolores o foco hoy..." rows={2} style={{ width:"100%", background:"none", border:"none", color:"#fff", fontSize:13, outline:"none", resize:"none" }} />
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontFamily: "'Bebas Neue'", fontSize: 40, lineHeight: 1, color: streak > 0 ? C.accent : C.muted }}>{streak}</div>
+              <div style={{ fontSize: 9, color: C.muted, letterSpacing: "2px" }}>RACHA</div>
             </div>
           </div>
-        )}
+        </header>
 
-        {tab === "entreno" && (
-          <div style={{ animation:"fadeUp 0.2s" }}>
-            <h2 style={{ fontFamily:"'Bebas Neue'", fontSize:28, color:C.accent, marginBottom:2 }}>{workout.tag}</h2>
-            <p style={{ fontSize:14, fontWeight:600, marginBottom:15 }}>{workout.name}</p>
-            {workout.ex.map(([name, sets, note], i) => (
-              <div key={i} style={{ background:C.card, padding:12, borderRadius:8, border:`1px solid ${C.bdr}`, marginBottom:8 }}>
-                <div style={{ fontSize:14, fontWeight:600 }}>{i+1}. {name}</div>
-                <div style={{ fontSize:12, color:C.green, fontFamily:"'DM Mono'", marginTop:4 }}>{sets} <span style={{ color:C.muted }}>· {note}</span></div>
+        <main style={{ padding: "0 16px" }}>
+          {tab === "hoy" && (
+            <div className="fade" style={{ paddingTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+              <button onClick={toggleWorkout} style={{ width: "100%", padding: "18px 20px", borderRadius: 14, background: td.done ? "rgba(0,232,124,0.07)" : C.card, border: `1px solid ${td.done ? C.green : C.bdr}`, cursor: "pointer", transition: "all 0.25s", textAlign: "left", animation: flash ? "glow 0.7s ease" : "none" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                  <div style={{ width: 46, height: 46, borderRadius: 10, background: td.done ? "rgba(0,232,124,0.2)" : C.dim, border: `1px solid ${td.done ? C.green : "rgba(255,255,255,0.08)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>
+                    {td.done ? "✓" : "○"}
+                  </div>
+                  <div>
+                    <div style={{ fontFamily: "'Bebas Neue'", fontSize: 20, letterSpacing: "1px", color: td.done ? C.green : "#fff" }}>{td.done ? "ENTRENO COMPLETADO" : "MARCAR ENTRENO"}</div>
+                    <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{td.done ? `✓ ${workout.tag} — ${workout.name}` : `Hoy: ${workout.tag} — ${workout.name}`}</div>
+                  </div>
+                </div>
+              </button>
+
+              <div style={{ background: C.card, borderRadius: 14, border: `1px solid ${C.bdr}`, overflow: "hidden" }}>
+                <div style={{ padding: "11px 16px", borderBottom: `1px solid ${C.dim}`, display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ fontFamily: "'Bebas Neue'", fontSize: 15, letterSpacing: "1.5px", color: C.accent }}>HÁBITOS HOY</span>
+                  <span style={{ fontFamily: "'DM Mono'", fontSize: 12, color: doneHabits === HABITS.length ? C.green : C.muted }}>{doneHabits}/{HABITS.length}</span>
+                </div>
+                {HABITS.map((h, i) => {
+                  const done = !!td.habits?.[h.id];
+                  return (
+                    <button key={h.id} onClick={() => mutate({ habits: { ...td.habits, [h.id]: !done } })} style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", background: "none", border: "none", borderBottom: i < HABITS.length - 1 ? `1px solid ${C.dim}` : "none", cursor: "pointer", color: done ? "#fff" : C.muted }}>
+                      <span style={{ fontSize: 17 }}>{h.icon}</span>
+                      <span style={{ flex: 1, textAlign: "left", fontSize: 14, fontWeight: done ? 500 : 400 }}>{h.label}</span>
+                      <div style={{ width: 20, height: 20, borderRadius: 5, background: done ? C.green : "transparent", border: `1.5px solid ${done ? C.green : "rgba(255,255,255,0.2)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>{done && "✓"}</div>
+                    </button>
+                  );
+                })}
               </div>
-            ))}
-          </div>
-        )}
 
-        {tab === "comida" && (
-          <div style={{ display:"flex", flexDirection:"column", gap:10, animation:"fadeUp 0.2s" }}>
-            <div style={{ background:C.card, padding:14, borderRadius:10, border:`1px solid ${C.bdr}` }}>
-              <textarea value={food} onChange={e=>setFood(e.target.value)} placeholder="Ej: 200g de pavo + arroz..." rows={2} style={{ width:"100%", padding:10, background:C.dim, color:"#fff", border:`1px solid ${C.bdr}`, outline:"none", resize:"none", marginBottom:10 }} />
-              <button onClick={validateFood} disabled={aiState==="loading"} style={{ width:"100%", padding:12, background:"rgba(0,207,255,0.1)", border:`1px solid ${C.accent}`, color:C.accent, fontSize:14, fontWeight:600, cursor:"pointer" }}>{aiState==="loading"?"ANALIZANDO...":"VALIDAR COMIDA CON IA"}</button>
-              {feedback && <div style={{ marginTop:10, padding:10, background:C.dim, border:`1px solid ${C.bdr}`, fontSize:13, display:"flex", gap:8 }}><span>{feedback.emoji}</span><div><strong>{feedback.msg}</strong>{feedback.pro && <div style={{ fontSize:11, color:C.muted }}>P: {feedback.pro} | C: {feedback.carbs}</div>}</div></div>}
-            </div>
-            {[...(td.meals??[])].reverse().map((m,i)=> <div key={i} style={{ padding:10, background:C.card, borderRadius:8, border:`1px solid ${C.bdr}`, fontSize:13, display:"flex", justifyStyle:"space-between" }}><span style={{ marginRight:8 }}>{m.emoji||"🍽️"}</span><span style={{ flex:1 }}>{m.text} - <small style={{color:C.green}}>{m.msg}</small></span><span style={{ color:C.muted, fontSize:10 }}>{m.t}</span></div>)}
-          </div>
-        )}
+              <div style={{ background: C.card, borderRadius: 14, border: `1px solid ${C.bdr}`, padding: "12px 16px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: (td.meals?.length ?? 0) > 0 ? 10 : 0 }}>
+                  <span style={{ fontFamily: "'Bebas Neue'", fontSize: 15, letterSpacing: "1.5px", color: C.accent }}>COMIDAS HOY</span>
+                  <span style={{ fontFamily: "'DM Mono'", fontSize: 12, color: C.muted }}>{td.meals?.length ?? 0} reg.</span>
+                </div>
+                {(td.meals?.length ?? 0) > 0 ? td.meals.map((m, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, paddingTop: 8, borderTop: `1px solid ${C.dim}` }}>
+                    <span style={{ fontSize: 16 }}>{m.emoji || "🍽️"}</span>
+                    <span style={{ flex: 1, fontSize: 13 }}>{m.text} <small style={{color: C.green}}>{m.msg}</small></span>
+                    <span style={{ fontFamily: "'DM Mono'", fontSize: 10, color: C.muted }}>{m.t}</span>
+                  </div>
+                )) : <div style={{ fontSize: 13, color: C.muted, paddingTop: 2 }}>Sin comidas aún — ve a Comida ↗</div>}
+              </div>
 
-        {tab === "coach" && (
-          <div style={{ display:"flex", flexDirection:"column", height:"calc(100vh - 150px)", animation:"fadeUp 0.2s" }}>
-            <div style={{ flex:1, overflowY:"auto", display:"flex", flexDirection:"column", gap:10, paddingBottom:10 }}>
-              {coachMessages.length === 0 && <div style={{ background:C.card, padding:14, border:`1px solid ${C.bdr}`, color:C.muted, fontSize:13 }}>Jarvis Coach activo y conectado. Tengo tu anamnesis. Exige rendimiento o pide ajustes tácticos. Sin excusas.</div>}
-              {coachMessages.map((m,i)=> <div key={i} style={{ display:"flex", justifyContent:m.role==="user"?"flex-end":"flex-start" }}><div style={{ maxWidth:"85%", padding:12, borderRadius:10, background:m.role==="user"?"rgba(0,207,255,0.12)":C.card, border:`1px solid ${m.role === 'user' ? 'rgba(0,207,255,0.2)' : C.bdr}`, fontSize:13, lineHeight:1.5, whiteSpace:"pre-wrap" }}>{m.content}</div></div>)}
-              {coachLoading && <div style={{ color:C.muted, fontSize:12, fontFamily:"monospace" }}>JARVIS ANALIZANDO...</div>}
+              <div style={{ background: C.card, borderRadius: 14, border: `1px solid ${C.bdr}`, padding: "12px 16px" }}>
+                <div style={{ fontFamily: "'Bebas Neue'", fontSize: 13, color: C.muted, letterSpacing: "1px", marginBottom: 8 }}>SENSACIONES DEL DÍA</div>
+                <textarea value={td.notes ?? ""} onChange={e => mutate({ notes: e.target.value })} placeholder="Energía, ánimo, notas rápidas..." rows={2} style={{ width: "100%", background: "none", border: "none", color: "#fff", fontSize: 13, resize: "none", outline: "none", lineHeight: 1.6 }} />
+              </div>
             </div>
-            <div style={{ display:"flex", gap:8, paddingTop:5 }}>
-              <textarea value={coachInput} onChange={e=>setCoachInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault(); sendCoach();}}} placeholder="Mensaje al Coach..." rows={1} style={{ flex:1, padding:12, background:C.card, border:`1px solid ${C.bdr}`, color:"#fff", fontSize:13, outline:"none", resize:"none" }} />
-              <button onClick={sendCoach} disabled={coachLoading||!coachInput.trim()} style={{ width:45, background:"rgba(0,207,255,0.1)", border:`1px solid ${C.accent}`, color:C.accent, cursor:"pointer" }}>↑</button>
-            </div>
-          </div>
-        )}
-      </main>
+          )}
 
-      <nav style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, background: C.surface, borderTop: `1px solid ${C.bdr}`, display: "flex", zIndex: 100 }}>
-        {[
-          { id: "hoy", icon: "⚡", label: "HOY" }, { id: "entreno", icon: "💪", label: "ENTRENO" },
-          { id: "comida", icon: "🍽️", label: "COMIDA" }, { id: "coach", icon: "🧠", label: "COACH" }
-        ].map(t => <button key={t.id} onClick={() => setTab(t.id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", padding: "10px 0", background: "none", border: "none", borderTop: `2px solid ${tab === t.id ? C.accent : "transparent"}`, color: tab === t.id ? C.accent : C.muted, fontSize: 10, cursor:"pointer" }}><span style={{ fontSize: 16 }}>{t.icon}</span><span>{t.label}</span></button>)}
-      </nav>
-    </div>
+          {tab === "entreno" && (
+            <div className="fade" style={{ paddingTop: 14 }}>
+              <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+                <button onClick={() => setParkMode(false)} style={{ flex: 1, padding: "10px", borderRadius: 10, background: !parkMode ? "rgba(0,207,255,0.12)" : C.dim, border: `1px solid ${!parkMode ? C.accent : "transparent"}`, color: !parkMode ? C.accent : C.muted, fontFamily: "'Bebas Neue'", fontSize: 16, letterSpacing: "1.5px", cursor: "pointer" }}>🏠 CASA</button>
+                <button onClick={() => setParkMode(true)} style={{ flex: 1, padding: "10px", borderRadius: 10, background: parkMode ? "rgba(0,232,124,0.1)" : C.dim, border: `1px solid ${parkMode ? C.green : "transparent"}`, color: parkMode ? C.green : C.muted, fontFamily: "'Bebas Neue'", fontSize: 16, letterSpacing: "1.5px", cursor: "pointer" }}>🌳 PARQUE</button>
+              </div>
+              {!parkMode ? (
+                <>
+                  <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}>
+                    <div style={{ fontFamily: "'Bebas Neue'", fontSize: 56, color: C.accent, lineHeight: 1 }}>{workout.tag}</div>
+                    <div>
+                      <div style={{ fontFamily: "'Bebas Neue'", fontSize: 18, letterSpacing: "0.5px" }}>{workout.name}</div>
+                      <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>6 reps perfectas &gt; 12 descontroladas</div>
+                    </div>
+                  </div>
+                  {workout.ex.map(([name, sets, note], i) => (
+                    <div key={i} style={{ background: C.card, borderRadius: 12, border: `1px solid ${C.bdr}`, padding: "14px 16px", marginBottom: 8, display: "flex", gap: 14 }}>
+                      <div style={{ fontFamily: "'Bebas Neue'", fontSize: 24, color: C.accent, minWidth: 22, lineHeight: 1.1 }}>{i + 1}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 5 }}>{name}</div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                          <span style={{ fontFamily: "'DM Mono'", fontSize: 12, color: C.green, background: "rgba(0,232,124,0.1)", padding: "2px 9px", borderRadius: 5 }}>{sets}</span>
+                          <span style={{ fontSize: 12, color: C.muted, alignSelf: "center" }}>{note}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <>
+                  <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}>
+                    <div style={{ fontFamily: "'Bebas Neue'", fontSize: 56, color: C.green, lineHeight: 1 }}>🌳</div>
+                    <div>
+                      <div style={{ fontFamily: "'Bebas Neue'", fontSize: 18, letterSpacing: "0.5px" }}>PARK MODE — CALISTENIA</div>
+                    </div>
+                  </div>
+                  {PARK_WORKOUT.map(([name, sets, note], i) => (
+                    <div key={i} style={{ background: C.card, borderRadius: 12, border: `1px solid rgba(0,232,124,0.12)`, padding: "14px 16px", marginBottom: 8, display: "flex", gap: 14 }}>
+                      <div style={{ fontFamily: "'Bebas Neue'", fontSize: 24, color: C.green, minWidth: 22, lineHeight: 1.1 }}>{i + 1}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 5 }}>{name}</div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                          <span style={{ fontFamily: "'DM Mono'", fontSize: 12, color: C.green, background: "rgba(0,232,124,0.1)", padding: "2px 9px", borderRadius: 5 }}>{sets}</span>
+                          <span style={{ fontSize: 12, color: C.muted, alignSelf: "center" }}>{note}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
+
+          {tab === "comida" && (
+            <div className="fade" style={{ paddingTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ background: C.card, borderRadius: 14, border: `1px solid ${C.bdr}`, padding: 16 }}>
+                <textarea value={food} onChange={e => setFood(e.target.value)} placeholder="ej: 200g arroz + 150g pollo plancha..." rows={2} style={{ width: "100%", background: C.dim, border: `1px solid ${C.bdr}`, borderRadius: 8, padding: "10px 12px", color: "#fff", fontSize: 14, resize: "none", outline: "none", marginBottom: 10 }} />
+                <button onClick={validateFood} disabled={aiState === "loading"} style={{ width: "100%", padding: "13px", borderRadius: 9, background: "rgba(0,207,255,0.12)", border: `1px solid ${C.accent}`, color: C.accent, fontFamily: "'Bebas Neue'", fontSize: 18, letterSpacing: "2px", cursor: "pointer" }}>{aiState === "loading" ? "ANALIZANDO..." : "VALIDAR CON IA"}</button>
+                {feedback && <div style={{ marginTop: 12, padding: "12px 14px", borderRadius: 10, background: "rgba(0,232,124,0.07)", border: "1px solid rgba(0,232,124,0.25)", display: "flex", gap: 12, alignItems: "center" }}><span style={{ fontSize: 26 }}>{feedback.emoji}</span><div><div style={{ fontSize: 14, fontWeight: 600, color: C.green }}>{feedback.msg}</div>{feedback.pro && <div style={{ fontSize: 11, color: C.muted, marginTop: 3 }}>Proteína: {feedback.pro} · Carbs: {feedback.carbs}</div>}</div></div>}
+              </div>
+              {[...td.meals].reverse().map((m, i) => (
+                <div key={i} style={{ padding: "12px 16px", background: C.card, borderRadius: 14, border: `1px solid ${C.bdr}`, display: "flex", gap: 10 }}><span style={{ fontSize: 19 }}>{m.emoji || "🍽️"}</span><div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 500 }}>{m.text}</div><div style={{ fontSize: 12, color: C.green, marginTop: 2 }}>{m.msg}</div></div><span style={{ fontFamily: "'DM Mono'", fontSize: 10, color: C.muted }}>{m.t}</span></div>
+              ))}
+            </div>
+          )}
+
+          {tab === "coach" && (
+            <div className="fade" style={{ paddingTop: 14, display: "flex", flexDirection: "column", height: "calc(100vh - 140px)" }}>
+              <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 10, paddingBottom: 8 }}>
+                {coachMessages.length === 0 && <div style={{ background: C.card, borderRadius: 14, border: `1px solid ${C.bdr}`, padding: "18px 16px", color: C.muted, fontSize: 13 }}>Jarvis Coach activo. Tengo tu perfil completo. Pídeme ajustes tácticos o adaptaciones sin excusas.</div>}
+                {coachMessages.map((m, i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}><div style={{ maxWidth: "85%", padding: "12px 14px", borderRadius: m.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px", background: m.role === "user" ? "rgba(0,207,255,0.12)" : C.card, border: `1px solid ${m.role === "user" ? "rgba(0,207,255,0.3)" : C.bdr}`, fontSize: 14, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{m.content}</div></div>
+                ))}
+                {coachLoading && <div style={{ display: "flex", justifyContent: "flex-start" }}><div style={{ padding: "12px 16px", borderRadius: "14px 14px 14px 4px", background: C.card, border: `1px solid ${C.bdr}`, animation: "pulse 1.2s infinite" }}><span style={{ color: C.muted, fontSize: 13, letterSpacing: "3px" }}>...</span></div></div>}
+              </div>
+              <div style={{ display: "flex", gap: 8, paddingTop: 8 }}><textarea value={coachInput} onChange={e => setCoachInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendCoach(); } }} placeholder="Mensaje al Coach..." rows={1} style={{ flex: 1, background: C.card, border: `1px solid ${C.bdr}`, borderRadius: 10, padding: "11px 13px", color: "#fff", fontSize: 14, resize: "none", outline: "none" }} /><button onClick={sendCoach} disabled={coachLoading || !coachInput.trim()} style={{ width: 46, borderRadius: 10, background: "rgba(0,207,255,0.15)", border: `1px solid ${C.accent}`, color: C.accent, fontSize: 20, cursor: "pointer" }}>↑</button></div>
+            </div>
+          )}
+        </main>
+
+        <nav style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, background: C.surface, borderTop: `1px solid ${C.bdr}`, display: "flex", zIndex: 100 }}>
+          {[
+            { id: "hoy", icon: "⚡", label: "HOY" }, { id: "entreno", icon: "💪", label: "ENTRENO" },
+            { id: "comida", icon: "🍽️", label: "COMIDA" }, { id: "coach", icon: "🧠", label: "COACH" }
+          ].map(t => (
+            <button key={t.id} onClick={() => setTab(t.id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3, padding: "8px 0 10px", background: "none", border: "none", borderTop: `2px solid ${tab === t.id ? C.accent : "transparent"}`, color: tab === t.id ? C.accent : C.muted, fontSize: 10, fontWeight: 500, cursor: "pointer" }}><span style={{ fontSize: 19 }}>{t.icon}</span><span>{t.label}</span></button>
+          ))}
+        </nav>
+      </div>
+    </>
   );
 }
