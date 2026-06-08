@@ -81,24 +81,29 @@ const PARK_WORKOUT = [
 
 const SK = "jfit-v2";
 
-async function loadData() {
+function loadData() {
   try {
-    const r = JSON.parse(localStorage.getItem(SK) || "null");
-    if (r) return JSON.parse(r.value);
+    const r = localStorage.getItem(SK);
+    if (r) {
+      const parsed = JSON.parse(r);
+      return parsed.value ? JSON.parse(parsed.value) : parsed;
+    }
   } catch {}
   return { days: {}, wIdx: 0, profile: null };
 }
 
-async function saveData(d) {
+function saveData(d) {
   try { localStorage.setItem(SK, JSON.stringify(d)); } catch {}
 }
 
 const dayOf = (data) => data?.days?.[TODAY] ?? { done: false, meals: [], habits: {}, notes: "" };
 
 function calcStreak(data) {
+  if (!data || !data.days) return 0;
   const d = new Date(); let s = 0;
   for (let i = 0; i < 365; i++) {
-    if (!data.days?.[d.toISOString().split("T")[0]]?.done) break;
+    const k = d.toISOString().split("T")[0];
+    if (!data.days?.[k]?.done) break;
     s++; d.setDate(d.getDate() - 1);
   }
   return s;
@@ -109,7 +114,7 @@ function weekDots(data) {
   d.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1));
   return Array.from({ length: 7 }, () => {
     const k = d.toISOString().split("T")[0];
-    const dot = { k, done: !!data.days?.[k]?.done, isToday: k === TODAY, label: d.toLocaleDateString("es", { weekday: "short" })[0].toUpperCase() };
+    const dot = { k, done: !!data?.days?.[k]?.done, isToday: k === TODAY, label: d.toLocaleDateString("es", { weekday: "short" })[0].toUpperCase() };
     d.setDate(d.getDate() + 1);
     return dot;
   });
@@ -120,7 +125,6 @@ const C = {
   bdr: "rgba(0,207,255,0.1)", accent: "#00cfff", green: "#00e87c",
   amber: "#ffc107", muted: "rgba(255,255,255,0.38)", dim: "rgba(255,255,255,0.06)",
 };
-
 
 // ─── ONBOARDING / ANAMNESIS ───────────────────────────────────────────
 const STEPS = [
@@ -198,7 +202,6 @@ function Onboarding({ onComplete }) {
     <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", background: "#07070f", color: "#fff", fontFamily: "'Outfit', sans-serif", display: "flex", flexDirection: "column" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap'); *{box-sizing:border-box;margin:0;padding:0;} input::placeholder{color:rgba(255,255,255,0.25);} @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}`}</style>
 
-      {/* PROGRESS BAR */}
       {step > 0 && step < STEPS.length - 1 && (
         <div style={{ height: 2, background: "rgba(255,255,255,0.05)", position: "relative" }}>
           <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${progress * 100}%`, background: "#00cfff", transition: "width 0.4s ease", borderRadius: 2 }} />
@@ -207,7 +210,6 @@ function Onboarding({ onComplete }) {
 
       <div style={{ flex: 1, padding: "0 20px", display: "flex", flexDirection: "column", justifyContent: "center", animation: "fadeUp 0.3s ease" }} key={step}>
 
-        {/* INTRO */}
         {step === 0 && (
           <div style={{ textAlign: "center" }}>
             <div style={{ fontFamily: "'Bebas Neue'", fontSize: 72, color: "#00cfff", lineHeight: 1, marginBottom: 8 }}>JARVIS</div>
@@ -227,7 +229,6 @@ function Onboarding({ onComplete }) {
           </div>
         )}
 
-        {/* QUIÉN ERES */}
         {step === 1 && (
           <div>
             <div style={{ fontFamily: "'DM Mono'", fontSize: 10, color: "#00cfff", letterSpacing: "4px", marginBottom: 8 }}>01 / QUIÉN ERES</div>
@@ -245,7 +246,6 @@ function Onboarding({ onComplete }) {
           </div>
         )}
 
-        {/* HISTORIAL */}
         {step === 2 && (
           <div>
             <div style={{ fontFamily: "'DM Mono'", fontSize: 10, color: "#00cfff", letterSpacing: "4px", marginBottom: 8 }}>02 / DE DÓNDE VIENES</div>
@@ -261,7 +261,7 @@ function Onboarding({ onComplete }) {
             />
             <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 8, letterSpacing: "0.5px" }}>Lesiones u operaciones relevantes (opcional)</div>
             <textarea
-              placeholder="Ej: esguince tobillo izquierdo, operación rodilla en 2021..."
+              placeholder="Ej: esguince tobillo izquierdo, operation rodilla en 2021..."
               value={form.lesiones}
               onChange={e => set("lesiones", e.target.value)}
               rows={2}
@@ -270,7 +270,6 @@ function Onboarding({ onComplete }) {
           </div>
         )}
 
-        {/* OBJETIVO */}
         {step === 3 && (
           <div>
             <div style={{ fontFamily: "'DM Mono'", fontSize: 10, color: "#00cfff", letterSpacing: "4px", marginBottom: 8 }}>03 / A DÓNDE VAS</div>
@@ -287,7 +286,6 @@ function Onboarding({ onComplete }) {
           </div>
         )}
 
-        {/* ESTILO DE VIDA */}
         {step === 4 && (
           <div>
             <div style={{ fontFamily: "'DM Mono'", fontSize: 10, color: "#00cfff", letterSpacing: "4px", marginBottom: 8 }}>04 / TU RITMO</div>
@@ -304,7 +302,7 @@ function Onboarding({ onComplete }) {
             </div>
 
             <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 10, letterSpacing: "0.5px" }}>Tu ritmo de vida</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
+            <div style={{ display: "flex", flexSpread: "column", gap: 8, marginBottom: 20, flexDirection: "column" }}>
               {RITMOS.map(r => (
                 <button key={r.id} onClick={() => set("ritmo", r.id)} style={{ padding: "14px 16px", borderRadius: 12, background: form.ritmo === r.id ? "rgba(0,207,255,0.08)" : "rgba(255,255,255,0.03)", border: `1px solid ${form.ritmo === r.id ? "#00cfff" : "rgba(255,255,255,0.08)"}`, color: "#fff", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 14, transition: "all 0.18s" }}>
                   <span style={{ fontSize: 24 }}>{r.icon}</span>
@@ -327,7 +325,6 @@ function Onboarding({ onComplete }) {
           </div>
         )}
 
-        {/* DONE */}
         {step === 5 && (
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: 64, marginBottom: 16 }}>🔥</div>
@@ -346,7 +343,6 @@ function Onboarding({ onComplete }) {
 
       </div>
 
-      {/* BOTTOM BUTTON */}
       {step > 0 && step < 5 && (
         <div style={{ padding: "16px 20px 28px" }}>
           <button onClick={next} disabled={!canNext()} style={{ width: "100%", padding: "15px", borderRadius: 12, background: canNext() ? "rgba(0,207,255,0.12)" : "rgba(255,255,255,0.03)", border: `1px solid ${canNext() ? "#00cfff" : "rgba(255,255,255,0.08)"}`, color: canNext() ? "#00cfff" : "rgba(255,255,255,0.2)", fontFamily: "'Bebas Neue'", fontSize: 20, letterSpacing: "2px", cursor: canNext() ? "pointer" : "not-allowed", transition: "all 0.2s" }}>
@@ -370,7 +366,9 @@ export default function App() {
   const [coachInput, setCoachInput] = useState("");
   const [coachLoading, setCoachLoading] = useState(false);
 
-  useEffect(() => { setData(loadData()); }, []);
+  useEffect(() => { 
+    setData(loadData()); 
+  }, []);
 
   const handleOnboardingComplete = (profile) => {
     setData(prev => {
@@ -378,76 +376,6 @@ export default function App() {
       saveData(next);
       return next;
     });
-  };
-
-  const sendCoach = async () => {
-    if (!coachInput.trim() || coachLoading) return;
-    const userMsg = coachInput.trim();
-    setCoachInput("");
-    const newMessages = [...coachMessages, { role: "user", content: userMsg }];
-    setCoachMessages(newMessages);
-    setCoachLoading(true);
-
-    const p = data.profile ?? {};
-    const todayData = dayOf(data);
-    const objetivoLabel = {
-      recuperacion: "Recuperación muscular", deporte: "Volver al deporte",
-      definicion: "Definición y estética", masa: "Ganar masa muscular",
-      bajar: "Perder peso", rendimiento: "Rendimiento general"
-    }[p.objetivo] ?? p.objetivo ?? "No especificado";
-
-    const systemPrompt = `Eres un entrenador personal experto en readaptación atlética, calistenia y rendimiento funcional. Tu nombre es Jarvis Coach.
-
-PERFIL DEL USUARIO:
-- Nombre: ${p.nombre ?? "Usuario"}
-- Edad: ${p.edad ?? "?"} años
-- Sexo: ${p.sexo ?? "?"}
-- Historial deportivo: ${p.historial ?? "No especificado"}
-- Lesiones: ${p.lesiones || "Ninguna indicada"}
-- Objetivo: ${objetivoLabel}
-- Días disponibles: ${p.dias ?? "?"} días/semana
-- Ritmo de vida: ${p.ritmo ?? "?"}
-- Fallos anteriores: ${(p.fallos ?? []).join(", ") || "No especificado"}
-
-HOY (${TODAY} — ${TODAY_DOW}):
-- Entreno completado: ${todayData.done ? "SÍ" : "NO"}
-- Rutina de hoy: ${workout?.name ?? "No asignada"}
-- Comidas registradas: ${(todayData.meals ?? []).map(m => m.text).join(" | ") || "Ninguna aún"}
-- Sensaciones/notas: ${todayData.notes || "Sin notas"}
-- Hábitos: Agua ${todayData.habits?.agua ? "✓" : "✗"} | Proteína ${todayData.habits?.pro ? "✓" : "✗"} | Sueño ${todayData.habits?.sleep ? "✓" : "✗"} | Ducha fría ${todayData.habits?.ducha ? "✓" : "✗"} | Movilidad ${todayData.habits?.movil ? "✓" : "✗"}
-
-FILOSOFÍA DEL SISTEMA:
-- 6 reps perfectas valen más que 12 descontroladas
-- Terminar activado, no destruido
-- Adherencia > perfección
-- Readaptación atlética inteligente, no culturismo extremo
-- El objetivo es que quieras volver mañana
-
-INSTRUCCIONES:
-- Habla como un entrenador real, cercano, directo y honesto
-- Usa el nombre del usuario cuando tenga sentido
-- Adapta siempre tus respuestas a su perfil, lesiones y contexto de hoy
-- Respuestas concisas y accionables — máximo 3-4 párrafos
-- Si pregunta por un ejercicio, explícalo con cues técnicos claros
-- Si menciona fatiga o dolor, ajusta y no fuerces
-- Idioma: español`;
-
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          system: systemPrompt,
-          messages: newMessages.map(m => ({ role: m.role, content: m.content })),
-        })
-      });
-      const json = await res.json();
-      const reply = json.content?.find(c => c.type === "text")?.text ?? "Error al conectar con el coach.";
-      setCoachMessages(prev => [...prev, { role: "assistant", content: reply }]);
-    } catch {
-      setCoachMessages(prev => [...prev, { role: "assistant", content: "Error de conexión. Intenta de nuevo." }]);
-    }
-    setCoachLoading(false);
   };
 
   const mutate = useCallback((patch) => {
@@ -480,18 +408,18 @@ INSTRUCCIONES:
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          system: "Eres nutricionista deportivo. Responde SÓLO con JSON válido. Sin backticks. Sin texto adicional.",
-          messages: [{ role: "user", content: `Evalúa para atleta con físico atlético funcional: "${snap}"\nJSON: {"ok":true,"emoji":"✅","msg":"frase concisa max 8 palabras","pro":"alta","carbs":"medios"}` }],
+          system: "Eres un nutricionista deportivo de alto rendimiento. Analiza con precisión técnica lo que come el usuario. Responde SÓLO con JSON válido, sin bloques de código, sin texto adicional.",
+          messages: [{ role: "user", content: `Evalúa para atleta con físico atlético funcional: "${snap}"\nJSON esperado: {"ok":true,"emoji":"✅","msg":"frase concisa max 8 palabras","pro":"alta","carbs":"medios"}` }],
         })
       });
       const json = await res.json();
       const raw = json.content?.find(c => c.type === "text")?.text ?? "{}";
-      const p = JSON.parse(raw.replace(/```json?|```/g, "").trim());
+      const parsedFeedback = JSON.parse(raw.replace(/```json?|```/g, "").trim());
       const t = new Date().toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
-      setFeedback(p);
+      setFeedback(parsedFeedback);
       setData(prev => {
         const td = dayOf(prev);
-        const next = { ...prev, days: { ...prev.days, [TODAY]: { ...td, meals: [...(td.meals ?? []), { text: snap, t, ...p }] } } };
+        const next = { ...prev, days: { ...prev.days, [TODAY]: { ...td, meals: [...(td.meals ?? []), { text: snap, t, ...parsedFeedback }] } } };
         saveData(next);
         return next;
       });
@@ -528,6 +456,70 @@ INSTRUCCIONES:
     { id: "coach", icon: "🧠", label: "COACH" },
     { id: "stats", icon: "📊", label: "STATS" },
   ];
+
+  const sendCoach = async () => {
+    if (!coachInput.trim() || coachLoading) return;
+    const userMsg = coachInput.trim();
+    setCoachInput("");
+    
+    const updatedMessages = [...coachMessages, { role: "user", content: userMsg }];
+    setCoachMessages(updatedMessages);
+    setCoachLoading(true);
+
+    const p = data.profile ?? {};
+    const todayData = dayOf(data);
+    const objetivoLabel = {
+      recuperacion: "Recuperación muscular", deporte: "Volver al deporte",
+      definicion: "Definición y estética", masa: "Ganar masa muscular",
+      bajar: "Perder peso", rendimiento: "Rendimiento general"
+    }[p.objetivo] ?? p.objetivo ?? "No especificado";
+
+    const systemPrompt = `Eres un mentor de alto rendimiento y preparador físico de élite. Tu nombre es Jarvis Coach. Tus respuestas deben ser directas, concisas, accionables y de alto valor. Trata al usuario como a un profesional de alto rendimiento que busca resultados letales, no explicaciones pasivas.
+
+PERFIL DEL ATLETA:
+- Nombre: ${p.nombre ?? "Usuario"}
+- Edad: ${p.edad ?? "?"} años
+- Sexo: ${p.sexo ?? "?"}
+- Historial: ${p.historial ?? "No especificado"}
+- Lesiones/Limitaciones: ${p.lesiones || "Ninguna indicada"}
+- Objetivo Estratégico: ${objetivoLabel}
+- Frecuencia semanal: ${p.dias ?? "?"} días
+- Ritmo de vida: ${p.ritmo ?? "?"}
+
+REGISTRO DE HOY (${TODAY} — ${TODAY_DOW}):
+- Estado del entrenamiento: ${todayData.done ? "COMPLETADO" : "PENDIENTE"}
+- Rutina asignada hoy: ${workout?.name ?? "Ninguna"}
+- Nutrición registrada: ${(todayData.meals ?? []).map(m => m.text).join(" | ") || "Sin registrar"}
+- Notas/Sensaciones: ${todayData.notes || "Sin anotaciones"}
+- Hábitos cubiertos: Agua ${todayData.habits?.agua ? "✓" : "✗"} | Proteína ${todayData.habits?.pro ? "✓" : "✗"} | Sueño ${todayData.habits?.sleep ? "✓" : "✗"} | Ducha fría ${todayData.habits?.ducha ? "✓" : "✗"} | Movilidad ${todayData.habits?.movil ? "✓" : "✗"}
+
+FILOSOFÍA DE EJECUCIÓN:
+- Ejecución perfecta > volumen basura.
+- Cero paternalismo. Si detectas justificaciones o mentalidad débil, corrige de forma directa y seca.
+- Enfoque radical en consistencia y escalabilidad física.
+
+INSTRUCCIONES DE RESPUESTA:
+- Habla claro y con autoridad. Usa su nombre.
+- Máximo 2-3 párrafos ultrapotentes. Ve directo al grano.
+- Si pide ajustes técnicos, dale los "cues" exactos sin rodeos.`;
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system: systemPrompt,
+          messages: updatedMessages.map(m => ({ role: m.role, content: m.content })),
+        })
+      });
+      const json = await res.json();
+      const reply = json.content?.find(c => c.type === "text")?.text ?? "Error al procesar la respuesta del Coach.";
+      setCoachMessages(prev => [...prev, { role: "assistant", content: reply }]);
+    } catch {
+      setCoachMessages(prev => [...prev, { role: "assistant", content: "Error de red al conectar con Jarvis Coach. Reintenta." }]);
+    }
+    setCoachLoading(false);
+  };
 
   return (
     <>
@@ -720,7 +712,7 @@ INSTRUCCIONES:
                       <span style={{ fontSize: 19, flexShrink: 0 }}>{m.emoji || "🍽️"}</span>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 13, fontWeight: 500 }}>{m.text}</div>
-                        {m.msg && <div style={{ fontSize: 12, color: m.ok !== false ? C.green : C.amber, marginTop: 2 }}>{m.msg}</div>}
+                        {m.msg && <div style={{ fontSize: 12, color: m.ok !== false ? C.green : m.ok === false ? C.amber : "#fff", marginTop: 2 }}>{m.msg}</div>}
                       </div>
                       <span style={{ fontFamily: "'DM Mono'", fontSize: 10, color: C.muted, flexShrink: 0, paddingTop: 2 }}>{m.t}</span>
                     </div>
@@ -741,7 +733,7 @@ INSTRUCCIONES:
                     <div>
                       <div style={{ fontFamily: "'Bebas Neue'", fontSize: 16, color: C.accent, letterSpacing: "1px", marginBottom: 4 }}>JARVIS COACH</div>
                       <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.6 }}>
-                        Hola {data.profile?.nombre ?? ""}. Tengo tu perfil completo. Cuéntame cómo estás, qué no entiendes, o qué quieres ajustar hoy.
+                        Hola {data.profile?.nombre ?? ""}. Tengo tu perfil completo. Cuéntame cómo estás, qué no entiendes o qué quieres ajustar hoy.
                       </div>
                     </div>
                   </div>
@@ -783,7 +775,7 @@ INSTRUCCIONES:
                   value={coachInput}
                   onChange={e => setCoachInput(e.target.value)}
                   onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendCoach(); } }}
-                  placeholder="Pregunta, cuéntame, o pídeme que adapte algo..."
+                  placeholder="Pregunta, cuéntame o pídeme que adapte algo..."
                   rows={2}
                   style={{ flex: 1, background: C.card, border: `1px solid ${C.bdr}`, borderRadius: 10, padding: "11px 13px", color: "#fff", fontSize: 14, resize: "none", outline: "none", fontFamily: "'Outfit', sans-serif", lineHeight: 1.5 }}
                 />
